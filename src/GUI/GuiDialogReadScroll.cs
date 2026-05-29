@@ -58,6 +58,11 @@ public class GuiDialogReadScroll : GuiDialog
         ctx.SetSourceRGBA(0.12, 0.10, 0.07, 0.5);
         RoundedRect(ctx, PadX - 12, PadY - 10, W - (PadX - 12) * 2, H - (PadY - 10) * 2, 2); ctx.Fill();
 
+        // Theme illustration — top-right corner, drawn before clip so it isn't masked
+        var (tr, tg, tb) = LoreTheme.GetAccent(_entry.Theme);
+        double illSize = 52;
+        LoreTheme.DrawIllustration(ctx, _entry.Theme, W - PadX - illSize * 0.42, PadY + illSize * 0.42, illSize, 0.58);
+
         // ── Clip region for scrollable text ───────────────────────────────────
         double clipY = PadY - 10;
         double clipH = H - clipY * 2;
@@ -67,18 +72,8 @@ public class GuiDialogReadScroll : GuiDialog
         double cx = PadX;
         double cy = PadY - _scrollOffset;
 
-        // Element accent bar
-        uint elemColor = _entry.Element switch
-        {
-            "Fire" => 0xFF3050E0,
-            "Air"  => 0xFFEBDCD7,
-            _      => 0xFF6b5c45
-        };
-        ctx.SetSourceRGBA(
-            ((elemColor >> 16) & 0xFF) / 255.0,
-            ((elemColor >> 8)  & 0xFF) / 255.0,
-            ((elemColor)       & 0xFF) / 255.0,
-            0.55);
+        // Theme accent bar
+        ctx.SetSourceRGBA(tr, tg, tb, 0.55);
         ctx.Rectangle(cx - 14, cy, 2, 56); ctx.Fill();
 
         // Title

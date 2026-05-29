@@ -17,6 +17,7 @@ public sealed class SpellbookLoreEntry
     public string Id { get; set; } = "";
     public string Category { get; set; } = "lore";
     public string Group { get; set; } = "";
+    public string Theme { get; set; } = "";
     public string Title { get; set; } = "";
     public string Author { get; set; } = "";
     public string Element { get; set; } = "";

@@ -1674,6 +1674,16 @@ public class GuiDialogSpellbook : GuiDialog
             return;
         }
 
+        // Theme watermark — subtle background illustration in the detail panel
+        if (!string.IsNullOrEmpty(selected.Theme))
+        {
+            double illS = Math.Min(rightW, paneH) * 0.38;
+            LoreTheme.DrawIllustration(ctx, selected.Theme,
+                rightX + rightW - illS * 0.55,
+                topY + paneH * 0.40,
+                illS, 0.09);
+        }
+
         // Series siblings (only unlocked ones visible to player)
         var siblings = string.IsNullOrEmpty(selected.Group)
             ? new System.Collections.Generic.List<SpellbookLoreEntry> { selected }
@@ -1734,7 +1744,13 @@ public class GuiDialogSpellbook : GuiDialog
         ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
         ctx.SetFontSize(15); C(ctx, ClrGold, 0.95);
         TextAt(ctx, selected.Title, contentX, titleY);
-        C(ctx, ClrSep, 0.45); ctx.LineWidth = 1;
+        if (!string.IsNullOrEmpty(selected.Theme))
+        {
+            var (thr, thg, thb) = LoreTheme.GetAccent(selected.Theme);
+            ctx.SetSourceRGBA(thr, thg, thb, 0.50);
+        }
+        else C(ctx, ClrSep, 0.45);
+        ctx.LineWidth = 1;
         ctx.MoveTo(contentX, titleY + 18); ctx.LineTo(rightX + rightW - 16, titleY + 18); ctx.Stroke();
 
         // Body — clipped + scrollable

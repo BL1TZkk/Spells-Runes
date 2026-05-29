@@ -2,7 +2,8 @@
 	"code": "scroll-{type}",
 	"class": "Scroll",
 	"maxstacksize": 1,
-	"shape": { "base": "survival:item/lore/scroll" },
+	"renderType": "flat",
+	"texture": { "base": "spellsandrunes:item/lore/scroll" },
 	"variantgroups": [
 		{
 			"code": "type",

@@ -16,7 +16,10 @@ public sealed class SpellbookLoreEntry
 {
     public string Id { get; set; } = "";
     public string Category { get; set; } = "lore";
+    public string Group { get; set; } = "";
     public string Title { get; set; } = "";
+    public string Author { get; set; } = "";
+    public string Element { get; set; } = "";
     public string Preview { get; set; } = "";
     public string[] Body { get; set; } = Array.Empty<string>();
     public bool UnlockedByDefault { get; set; }

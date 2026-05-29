@@ -1,13 +1,14 @@
 using System;
 using Cairo;
 using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 using SpellsAndRunes.Lore;
 
 namespace SpellsAndRunes.GUI;
 
 public class GuiDialogReadScroll : GuiDialog
 {
-    private readonly ScrollEntry _entry;
+    private readonly SpellbookLoreEntry _entry;
     private double _scrollOffset;
     private double _maxScroll;
     private double _contentHeight;
@@ -16,7 +17,7 @@ public class GuiDialogReadScroll : GuiDialog
     private const double TitleSize = 15, AuthorSize = 10.5, BodySize = 11;
     private const double LineH = 16;
 
-    public GuiDialogReadScroll(ICoreClientAPI capi, ScrollEntry entry) : base(capi)
+    public GuiDialogReadScroll(ICoreClientAPI capi, SpellbookLoreEntry entry) : base(capi)
     {
         _entry = entry;
         ComposeDialog();
@@ -93,7 +94,10 @@ public class GuiDialogReadScroll : GuiDialog
         ctx.SetFontSize(AuthorSize);
         ctx.SetSourceRGBA(0.62, 0.54, 0.40, 0.75);
         ctx.MoveTo(cx, cy + AuthorSize);
-        ctx.ShowText("— " + _entry.Author);
+        if (!string.IsNullOrEmpty(_entry.Author))
+        {
+            ctx.ShowText("— " + _entry.Author);
+        }
         cy += AuthorSize + 12;
 
         // Divider
@@ -108,8 +112,7 @@ public class GuiDialogReadScroll : GuiDialog
         ctx.SetSourceRGBA(0.82, 0.76, 0.62, 0.88);
 
         double textW = W - cx * 2;
-        double bodyStart = cy;
-        cy = DrawWrappedText(ctx, _entry.Text, cx, cy, textW, LineH);
+        cy = DrawWrappedText(ctx, string.Join("\n\n", _entry.Body), cx, cy, textW, LineH);
         cy += 20;
 
         _contentHeight = cy + _scrollOffset;
@@ -185,6 +188,25 @@ public class GuiDialogReadScroll : GuiDialog
         ctx.LineTo(x, y + r);
         ctx.Arc(x + r, y + r, r, Math.PI, Math.PI * 3 / 2);
         ctx.ClosePath();
+    }
+
+    public override void OnMouseDown(MouseEvent args)
+    {
+        if (args.Button == EnumMouseButton.Right || !IsInsideDialog(args.X, args.Y))
+        {
+            TryClose();
+            args.Handled = true;
+            return;
+        }
+        base.OnMouseDown(args);
+    }
+
+    private bool IsInsideDialog(int mx, int my)
+    {
+        var b = SingleComposer?.Bounds;
+        if (b == null) return true;
+        return mx >= b.absX && mx <= b.absX + b.OuterWidth &&
+               my >= b.absY && my <= b.absY + b.OuterHeight;
     }
 
     public override void OnMouseWheel(MouseWheelEventArgs args)

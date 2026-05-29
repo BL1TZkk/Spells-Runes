@@ -37,6 +37,7 @@ public class PlayerSpellData
     private const string AttrSpellLevel   = "snr:spelllevel";   // ITree: spellId -> current level
     private const string AttrLoreUnlocked = "snr:loreunlocked"; // ITree: lore entry id -> unlocked
     private const string AttrFluxAlignmentLevel = "spellsandrunes:fluxalignmentlevel";
+    private const string AttrScrolls      = "snr:scrolls";      // ITree: scrollId -> 1 if read
     private const int    HotbarSlots      = 5;
 
     private readonly Entity entity;
@@ -270,6 +271,25 @@ public class PlayerSpellData
         if (gained > 0) entity.WatchedAttributes.MarkPathDirty(AttrSpellLevel);
         entity.WatchedAttributes.MarkPathDirty(AttrSpellXp);
         return gained;
+    }
+
+    // -----------------------------------------------------------------------
+    // Scrolls
+    // -----------------------------------------------------------------------
+
+    public bool HasReadScroll(string scrollId)
+        => GetTree(AttrScrolls).HasAttribute(scrollId);
+
+    public void MarkScrollRead(string scrollId)
+    {
+        GetTree(AttrScrolls).SetInt(scrollId, 1);
+        entity.WatchedAttributes.MarkPathDirty(AttrScrolls);
+    }
+
+    public IEnumerable<string> GetReadScrollIds()
+    {
+        if (GetTree(AttrScrolls) is TreeAttribute tree)
+            foreach (var kv in tree) yield return kv.Key;
     }
 
     // -----------------------------------------------------------------------

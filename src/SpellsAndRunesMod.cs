@@ -125,7 +125,7 @@ public class SpellsAndRunesMod : ModSystem
             .SetMessageHandler<MsgReadScroll>((player, msg) =>
             {
                 if (!string.IsNullOrEmpty(msg.ScrollId))
-                    PlayerSpellData.For(player.Entity).MarkScrollRead(msg.ScrollId);
+                    PlayerSpellData.For(player.Entity).UnlockLoreEntry(msg.ScrollId);
             })
             .SetMessageHandler<MsgUnlockSpell>((player, msg) =>
             {

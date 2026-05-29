@@ -7,7 +7,6 @@ using Vintagestory.API.Common;
 using SpellsAndRunes.Lore;
 using SpellsAndRunes.Spells;
 using SpellsAndRunes.Network;
-using SpellsAndRunes.Lore;
 
 namespace SpellsAndRunes.GUI;
 
@@ -50,6 +49,12 @@ public class GuiDialogSpellbook : GuiDialog
     private readonly bool[]   _panInit = new bool[4];
     private readonly string?[] _selId  = new string?[4];
     private readonly string?[] _selectedLoreEntry = new string?[2];
+    private double _loreDetailScroll = 0;
+    private double _loreDetailMaxScroll = 0;
+    private (double x, double y, double w, double h) _loreDetailR;
+    private (double x, double y, double w, double h) _lorePrevR;
+    private (double x, double y, double w, double h) _loreNextR;
+    private bool _hasPrev, _hasNext;
     private bool   _isPanning = false, _panMoved = false;
     private double _panStartMx, _panStartMy, _panStartPx, _panStartPy;
 
@@ -77,10 +82,6 @@ public class GuiDialogSpellbook : GuiDialog
 
     // ── Wheel element filter (-1 = All) ───────────────────────────────────────
     private int _wheelElemFilter = -1;
-
-    // ── Lore tab state ────────────────────────────────────────────────────────
-    private string? _selectedScrollId;
-    private readonly List<(string id, double x, double y, double w, double h)> _scrollListR = new();
 
     // ── Animation & screen coords ─────────────────────────────────────────────
     private double _t = 0;
@@ -1130,10 +1131,30 @@ public class GuiDialogSpellbook : GuiDialog
                 Redraw(); e.Handled = true; return;
             }
 
-            foreach (var (id, rx, ry, rw, rh) in _loreEntryR)
+            foreach (var (firstId, rx, ry, rw, rh) in _loreEntryR)
             {
                 if (!InRect(rx, ry, rw, rh, lx, ly)) continue;
-                _selectedLoreEntry[_loreCategory] = id;
+                var clickedGroup = SpellbookLoreRegistry.Get(firstId)?.Group ?? firstId;
+                var currentId = _selectedLoreEntry[_loreCategory];
+                var currentGroup = currentId != null
+                    ? SpellbookLoreRegistry.Get(currentId)?.Group ?? currentId
+                    : null;
+                if (clickedGroup != currentGroup)
+                {
+                    _selectedLoreEntry[_loreCategory] = firstId;
+                    _loreDetailScroll = 0;
+                }
+                Redraw(); e.Handled = true; return;
+            }
+
+            if (_hasPrev && InRect(_lorePrevR, lx, ly))
+            {
+                NavigateLore(-1);
+                Redraw(); e.Handled = true; return;
+            }
+            if (_hasNext && InRect(_loreNextR, lx, ly))
+            {
+                NavigateLore(+1);
                 Redraw(); e.Handled = true; return;
             }
         }
@@ -1190,19 +1211,6 @@ public class GuiDialogSpellbook : GuiDialog
                 }
                 _dragStartX = lx; _dragStartY = ly; _dragStarted = true;
                 break;
-            }
-        }
-
-        // Lore scroll list
-        if (_mainTab == 2)
-        {
-            foreach (var (id, rx, ry, rw, rh) in _scrollListR)
-            {
-                if (InRect(rx, ry, rw, rh, lx, ly))
-                {
-                    _selectedScrollId = id;
-                    Redraw(); e.Handled = true; return;
-                }
             }
         }
 
@@ -1278,6 +1286,35 @@ public class GuiDialogSpellbook : GuiDialog
         _dragStarted = false;
 
         base.OnMouseUp(e);
+    }
+
+    public override void OnMouseWheel(MouseWheelEventArgs args)
+    {
+        if (_mainTab == 2 && InRect(_loreDetailR, _mouseX, _mouseY) && _loreDetailMaxScroll > 0)
+        {
+            _loreDetailScroll = Math.Clamp(_loreDetailScroll - args.deltaPrecise * 24, 0, _loreDetailMaxScroll);
+            Redraw();
+            args.SetHandled(true);
+            return;
+        }
+        base.OnMouseWheel(args);
+    }
+
+    private void NavigateLore(int delta)
+    {
+        var currentId = _selectedLoreEntry[_loreCategory];
+        var current = currentId != null ? SpellbookLoreRegistry.Get(currentId) : null;
+        if (current == null || string.IsNullOrEmpty(current.Group)) return;
+
+        var data = PlayerSpellData.For(capi.World.Player.Entity);
+        var siblings = SpellbookLoreRegistry.All
+            .Where(e => e.Group == current.Group && (data?.IsLoreEntryUnlocked(e.Id) ?? e.UnlockedByDefault))
+            .ToList();
+        int idx = siblings.FindIndex(e => e.Id == current.Id) + delta;
+        if (idx < 0 || idx >= siblings.Count) return;
+
+        _selectedLoreEntry[_loreCategory] = siblings[idx].Id;
+        _loreDetailScroll = 0;
     }
 
     // ── Lore tab ─────────────────────────────────────────────────────────────
@@ -1530,160 +1567,7 @@ public class GuiDialogSpellbook : GuiDialog
 
     private void DrawLoreTab(Context ctx, double x, double y, double w, double h, PlayerSpellData? data)
     {
-        _scrollListR.Clear();
-
-        var entity = capi.World.Player?.Entity;
-        var data   = entity != null ? PlayerSpellData.For(entity) : null;
-
-        double listW  = Math.Floor(w * 0.33);
-        double detailX = x + listW + 1;
-        double detailW = w - listW - 1;
-
-        // ── Left panel background ─────────────────────────────────────────────
-        ctx.SetSourceRGBA(0.06, 0.05, 0.04, 0.55);
-        Rect(ctx, x, y, listW, h); ctx.Fill();
-
-        // Divider
-        ctx.SetSourceRGBA(0.42, 0.34, 0.22, 0.35); ctx.LineWidth = 1;
-        ctx.MoveTo(x + listW, y); ctx.LineTo(x + listW, y + h); ctx.Stroke();
-
-        // ── Scroll list ───────────────────────────────────────────────────────
-        ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
-        double rowH   = 22;
-        double padX   = 10;
-        double cy2    = y + 8;
-
-        string[] elemOrder = { "Fire", "Air", "Water", "Earth" };
-        uint[]   elemClr   = { 0xFF3050E0, 0xFFEBDCD7, 0xFFC88030, 0xFF377DAF };
-
-        foreach (var (elem, eClrPacked) in elemOrder.Zip(elemClr))
-        {
-            var group = ScrollRegistry.ByElement(elem)
-                .Where(s => data?.HasReadScroll(s.Id) ?? false)
-                .ToList();
-            if (group.Count == 0) continue;
-
-            // Group header
-            ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Bold);
-            ctx.SetFontSize(9.5);
-            double er = ((eClrPacked >> 16) & 0xFF) / 255.0;
-            double eg = ((eClrPacked >> 8)  & 0xFF) / 255.0;
-            double eb = ((eClrPacked)        & 0xFF) / 255.0;
-            ctx.SetSourceRGBA(eb, eg, er, 0.70); // BGRA engine order
-            ctx.MoveTo(x + padX, cy2 + 10);
-            ctx.ShowText(elem.ToUpperInvariant());
-            cy2 += 16;
-
-            ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
-            ctx.SetFontSize(10.5);
-            foreach (var entry in group)
-            {
-                bool sel = _selectedScrollId == entry.Id;
-                if (sel)
-                {
-                    ctx.SetSourceRGBA(0.22, 0.18, 0.12, 0.70);
-                    Rect(ctx, x + 1, cy2, listW - 2, rowH); ctx.Fill();
-                    ctx.SetSourceRGBA(eb, eg, er, 0.30);
-                    ctx.Rectangle(x + 1, cy2, 3, rowH); ctx.Fill();
-                }
-                ctx.SetSourceRGBA(0.85, 0.78, 0.60, sel ? 0.95 : 0.60);
-                ctx.MoveTo(x + padX + 6, cy2 + rowH * 0.68);
-                ctx.ShowText(entry.Title);
-
-                _scrollListR.Add((entry.Id, x, cy2, listW, rowH));
-                cy2 += rowH;
-            }
-            cy2 += 6;
-        }
-
-        // Empty state
-        if (_scrollListR.Count == 0)
-        {
-            ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
-            ctx.SetFontSize(10.5);
-            ctx.SetSourceRGBA(0.55, 0.48, 0.35, 0.45);
-            ctx.MoveTo(x + padX, y + h * 0.45);
-            ctx.ShowText("No scrolls read yet.");
-        }
-
-        // ── Right panel: selected scroll ──────────────────────────────────────
-        var selected = _selectedScrollId != null ? ScrollRegistry.Get(_selectedScrollId) : null;
-
-        if (selected == null)
-        {
-            // Placeholder — dim decorative text
-            ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
-            ctx.SetFontSize(11);
-            ctx.SetSourceRGBA(0.55, 0.48, 0.35, 0.25);
-            string ph = "Select a scroll to read.";
-            var te2 = ctx.TextExtents(ph);
-            ctx.MoveTo(detailX + (detailW - te2.Width) / 2, y + h * 0.48);
-            ctx.ShowText(ph);
-            return;
-        }
-
-        double px  = detailX + 18;
-        double pw  = detailW - 36;
-        double pcy = y + 16;
-
-        // Element accent bar
-        int selElemIdx = Array.IndexOf(elemOrder, selected.Element);
-        uint selClrPk  = selElemIdx >= 0 ? elemClr[selElemIdx] : 0xFF6b5c45;
-        double sr2 = ((selClrPk >> 16) & 0xFF) / 255.0;
-        double sg2 = ((selClrPk >> 8)  & 0xFF) / 255.0;
-        double sb2 = ((selClrPk)        & 0xFF) / 255.0;
-        ctx.SetSourceRGBA(sb2, sg2, sr2, 0.50);
-        ctx.Rectangle(detailX + 6, pcy, 2, 52); ctx.Fill();
-
-        // Title
-        ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
-        ctx.SetFontSize(14);
-        ctx.SetSourceRGBA(0.92, 0.86, 0.72, 0.95);
-        ctx.MoveTo(px, pcy + 14);
-        ctx.ShowText(selected.Title);
-        pcy += 20;
-
-        // Author
-        ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
-        ctx.SetFontSize(10);
-        ctx.SetSourceRGBA(0.62, 0.54, 0.40, 0.70);
-        ctx.MoveTo(px, pcy + 10);
-        ctx.ShowText("— " + selected.Author);
-        pcy += 18;
-
-        // Divider
-        ctx.SetSourceRGBA(0.42, 0.34, 0.22, 0.35); ctx.LineWidth = 0.7;
-        ctx.MoveTo(px, pcy); ctx.LineTo(detailX + detailW - 14, pcy); ctx.Stroke();
-        pcy += 10;
-
-        // Body — clipped to detail panel
-        ctx.Rectangle(detailX, y, detailW, h); ctx.Clip();
-        ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Normal);
-        ctx.SetFontSize(10.5);
-        ctx.SetSourceRGBA(0.82, 0.76, 0.62, 0.85);
-        DrawWrappedLoreText(ctx, selected.Text, px, pcy, pw, 15.5);
-        ctx.ResetClip();
-    }
-
-    private static void DrawWrappedLoreText(Context ctx, string text, double x, double y, double maxW, double lineH)
-    {
-        double cy = y;
-        foreach (var para in text.Split('\n'))
-        {
-            if (string.IsNullOrEmpty(para)) { cy += lineH * 0.55; continue; }
-            string line = "";
-            foreach (var word in para.Split(' '))
-            {
-                string test = line.Length == 0 ? word : line + " " + word;
-                if (ctx.TextExtents(test).Width > maxW && line.Length > 0)
-                {
-                    ctx.MoveTo(x, cy + lineH * 0.78); ctx.ShowText(line);
-                    cy += lineH; line = word;
-                }
-                else line = test;
-            }
-            if (line.Length > 0) { ctx.MoveTo(x, cy + lineH * 0.78); ctx.ShowText(line); cy += lineH; }
-        }
+        _loreEntryR.Clear();
 
         double pad = 12;
         double leftW = Math.Min(270, Math.Max(190, w * 0.34));
@@ -1744,11 +1628,18 @@ public class GuiDialogSpellbook : GuiDialog
         Rect(ctx, leftX + 4, listY - 2, leftW - 8, Math.Max(0, topY + paneH - listY - 6));
         ctx.Clip();
 
-        foreach (var entry in visibleEntries)
+        var groups = visibleEntries
+            .GroupBy(e => string.IsNullOrEmpty(e.Group) ? e.Id : e.Group)
+            .ToList();
+        string? selectedGroup = selectedId != null
+            ? (SpellbookLoreRegistry.Get(selectedId)?.Group ?? selectedId)
+            : null;
+
+        foreach (var grp in groups)
         {
             if (listY + rowH > topY + paneH - 6) break;
-            bool active = entry.Id == selectedId;
-            _loreEntryR.Add((entry.Id, rowX, listY, rowW, rowH));
+            bool active = grp.Key == selectedGroup;
+            _loreEntryR.Add((grp.First().Id, rowX, listY, rowW, rowH));
 
             C(ctx, active ? ClrBgAlt : ClrBg, active ? 0.92 : 0.30);
             RRect(ctx, rowX, listY, rowW, rowH - 4, 4); ctx.Fill();
@@ -1757,44 +1648,124 @@ public class GuiDialogSpellbook : GuiDialog
 
             ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
             ctx.SetFontSize(12); C(ctx, active ? ClrGold : ClrText, active ? 0.95 : 0.78);
-            TextAt(ctx, entry.Title, rowX + 8, listY + 11);
+            string groupLabel = string.IsNullOrEmpty(grp.Key) ? grp.First().Title : grp.Key;
+            TextAt(ctx, TruncateToWidth(ctx, groupLabel, rowW - 20), rowX + 8, listY + 14);
 
-            ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
-            ctx.SetFontSize(9); C(ctx, ClrSub, active ? 0.78 : 0.55);
-            string preview = entry.Preview.Length > 72 ? entry.Preview[..69].TrimEnd() + "..." : entry.Preview;
-            TextAt(ctx, preview, rowX + 8, listY + 30);
+            ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
+            ctx.SetFontSize(11); C(ctx, ClrSub, active ? 0.78 : 0.50);
+            int cnt = grp.Count();
+            if (cnt > 1) TextAt(ctx, $"{cnt} entries", rowX + 8, listY + 32);
 
             listY += rowH;
         }
         ctx.Restore();
 
+        _loreDetailR = (rightX, topY, rightW, paneH);
+        _hasPrev = false; _hasNext = false;
         var selected = selectedId != null ? SpellbookLoreRegistry.Get(selectedId) : null;
         double contentX = rightX + 16;
-        double contentY = topY + 18;
-        double contentW = rightW - 32;
+        double contentW = rightW - 40;
 
         if (selected == null)
         {
             ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
             ctx.SetFontSize(12); C(ctx, ClrSub, 0.65);
-            TextAt(ctx, "No entries discovered.", contentX, contentY + 8);
+            TextAt(ctx, "No entries discovered.", contentX, topY + 26);
             return;
         }
 
-        ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
-        ctx.SetFontSize(17); C(ctx, ClrGold, 0.95);
-        TextAt(ctx, selected.Title, contentX, contentY);
+        // Series siblings (only unlocked ones visible to player)
+        var siblings = string.IsNullOrEmpty(selected.Group)
+            ? new System.Collections.Generic.List<SpellbookLoreEntry> { selected }
+            : SpellbookLoreRegistry.All
+                .Where(e => e.Group == selected.Group && (data?.IsLoreEntryUnlocked(e.Id) ?? e.UnlockedByDefault))
+                .ToList();
+        int sibIdx = siblings.FindIndex(e => e.Id == selected.Id);
+        int sibCount = siblings.Count;
 
+        // Group label + position row
+        double navRowY = topY + 10;
+        ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
+        ctx.SetFontSize(9.5); C(ctx, ClrSub, 0.7);
+        if (!string.IsNullOrEmpty(selected.Group))
+            TextAt(ctx, selected.Group.ToUpper(), contentX, navRowY + 10);
+
+        if (sibCount > 1)
+        {
+            double btnW = 26, btnH = 22;
+            double navRightX = rightX + rightW - 16;
+            string posLabel = $"{sibIdx + 1} / {sibCount}";
+            ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
+            ctx.SetFontSize(11);
+            var (posW, _) = TSize(ctx, posLabel);
+
+            double btnMidY = navRowY + btnH / 2;
+
+            // Next button
+            double nextX = navRightX - btnW;
+            _loreNextR = (nextX, navRowY, btnW, btnH);
+            _hasNext = sibIdx < sibCount - 1;
+            C(ctx, _hasNext ? ClrActive : ClrBgAlt, _hasNext ? 0.45 : 0.20);
+            RRect(ctx, nextX, navRowY, btnW, btnH, 4); ctx.Fill();
+            C(ctx, _hasNext ? ClrGold : ClrDim, _hasNext ? 0.55 : 0.20);
+            RRect(ctx, nextX, navRowY, btnW, btnH, 4); ctx.Stroke();
+            C(ctx, _hasNext ? ClrGold : ClrDim, _hasNext ? 0.90 : 0.30);
+            DrawArrow(ctx, nextX + btnW / 2, btnMidY, 5, true);
+
+            // Position label — vertically centered with buttons
+            double posX = nextX - posW - 10;
+            C(ctx, ClrText, 0.80);
+            TextAt(ctx, posLabel, posX, btnMidY + 4);
+
+            // Prev button
+            double prevX = posX - btnW - 8;
+            _lorePrevR = (prevX, navRowY, btnW, btnH);
+            _hasPrev = sibIdx > 0;
+            C(ctx, _hasPrev ? ClrActive : ClrBgAlt, _hasPrev ? 0.45 : 0.20);
+            RRect(ctx, prevX, navRowY, btnW, btnH, 4); ctx.Fill();
+            C(ctx, _hasPrev ? ClrGold : ClrDim, _hasPrev ? 0.55 : 0.20);
+            RRect(ctx, prevX, navRowY, btnW, btnH, 4); ctx.Stroke();
+            C(ctx, _hasPrev ? ClrGold : ClrDim, _hasPrev ? 0.90 : 0.30);
+            DrawArrow(ctx, prevX + btnW / 2, btnMidY, 5, false);
+        }
+
+        // Title
+        double titleY = topY + 36;
+        ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
+        ctx.SetFontSize(15); C(ctx, ClrGold, 0.95);
+        TextAt(ctx, selected.Title, contentX, titleY);
         C(ctx, ClrSep, 0.45); ctx.LineWidth = 1;
-        ctx.MoveTo(contentX, contentY + 24); ctx.LineTo(contentX + contentW, contentY + 24); ctx.Stroke();
+        ctx.MoveTo(contentX, titleY + 18); ctx.LineTo(rightX + rightW - 16, titleY + 18); ctx.Stroke();
+
+        // Body — clipped + scrollable
+        double bodyClipY = titleY + 24;
+        double bodyClipH = paneH - (bodyClipY - topY) - 6;
+        ctx.Save();
+        ctx.Rectangle(rightX + 4, bodyClipY, rightW - 8, bodyClipH);
+        ctx.Clip();
 
         ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Normal);
-        ctx.SetFontSize(12); C(ctx, ClrText, 0.86);
-        double bodyY = contentY + 44;
+        ctx.SetFontSize(13); C(ctx, ClrText, 0.86);
+        double bodyY = bodyClipY + 6 - _loreDetailScroll;
         foreach (var paragraph in selected.Body)
-        {
-            if (bodyY > topY + paneH - 14) break;
             bodyY = WrapText(ctx, paragraph, contentX, bodyY, contentW, 15) + 8;
+
+        double totalH = (bodyY + _loreDetailScroll) - (bodyClipY + 6);
+        _loreDetailMaxScroll = Math.Max(0, totalH - bodyClipH + 16);
+        _loreDetailScroll = Math.Min(_loreDetailScroll, _loreDetailMaxScroll);
+
+        ctx.Restore();
+
+        // Scrollbar
+        if (_loreDetailMaxScroll > 0)
+        {
+            double trackX = rightX + rightW - 12;
+            double trackY = bodyClipY + 4;
+            double trackH = bodyClipH - 8;
+            double thumbH = Math.Max(20, trackH * (bodyClipH / (totalH + 16)));
+            double thumbY = trackY + (_loreDetailScroll / _loreDetailMaxScroll) * (trackH - thumbH);
+            C(ctx, ClrBgAlt, 0.5); ctx.Rectangle(trackX, trackY, 4, trackH); ctx.Fill();
+            C(ctx, ClrBorder, 0.65); ctx.Rectangle(trackX, thumbY, 4, thumbH); ctx.Fill();
         }
     }
 
@@ -1854,6 +1825,28 @@ public class GuiDialogSpellbook : GuiDialog
         C(ctx, ClrSep); ctx.LineWidth = 1;
         ctx.MoveTo(x + 6, y); ctx.LineTo(x + w - 6, y); ctx.Stroke();
         Dot(ctx, x + 2, y, 2); Dot(ctx, x + w - 2, y, 2);
+    }
+
+    private static void DrawArrow(Context ctx, double cx, double cy, double size, bool right)
+    {
+        double dir = right ? 1 : -1;
+        ctx.MoveTo(cx - dir * size * 0.45, cy - size * 0.7);
+        ctx.LineTo(cx + dir * size * 0.55, cy);
+        ctx.LineTo(cx - dir * size * 0.45, cy + size * 0.7);
+        ctx.ClosePath();
+        ctx.Fill();
+    }
+
+    private static string TruncateToWidth(Context ctx, string text, double maxW)
+    {
+        if (ctx.TextExtents(text).Width <= maxW) return text;
+        int lo = 0, hi = text.Length;
+        while (hi - lo > 1)
+        {
+            int mid = (lo + hi) / 2;
+            if (ctx.TextExtents(text[..mid] + "…").Width <= maxW) lo = mid; else hi = mid;
+        }
+        return text[..lo] + "…";
     }
 
     private static double WrapText(Context ctx, string text, double x, double y, double maxW, double lineH)

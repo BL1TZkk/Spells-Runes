@@ -3,6 +3,7 @@ using System;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
+using SpellsAndRunes.Entities;
 
 namespace SpellsAndRunes.Spells.Fire;
 
@@ -20,46 +21,51 @@ public class FireMine : Spell
     public override float CastTime => 0.8f;
 
     public override string? AnimationCode => "fire_mine";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => true;
 
-    public override IReadOnlyList<string> Prerequisites => ["fire_cook_in_hand"];
-    public override (int col, int row) TreePosition => (0, 2);
+    public override IReadOnlyList<string> Prerequisites => ["fire_wisp"];
+    public override (int col, int row) TreePosition => (0, 5);
 
-    public const float Radius = 2.4f;
+    public const float Radius = 1.45f;
     public const float Damage = 10f;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
         if (world.Api == null) return;
 
-        var center = caster.SidedPos.XYZ.Add(caster.SidedPos.GetViewVector().ToVec3d().Normalize() * 1.4).Add(0, 0.05, 0);
-        center = ClampToSurface(world, center, 0.05);
+        var center = caster.Pos.XYZ.Add(caster.Pos.GetViewVector().ToVec3d().Normalize() * 1.4).Add(0, 0.03, 0);
+        center = ClampToSurface(world, center, 0.03);
+        SpawnMineEntity(caster, world, center, spellLevel);
         FireOrb.BroadcastFx(world, "fire_mine_arm", center, new Vec3d(0, 1, 0), spellLevel);
+    }
 
-        world.Api.Event.RegisterCallback(_ =>
+    private void SpawnMineEntity(EntityAgent caster, IWorldAccessor world, Vec3d center, int spellLevel)
+    {
+        var entityType = world.GetEntityType(new AssetLocation("spellsandrunes:fire-mine"));
+        if (entityType == null)
         {
-            if (!caster.Alive) return;
-            float radius = Radius * GetRangeMultiplier(spellLevel);
-            float damage = Damage * GetDamageMultiplier(spellLevel);
+            world.Api?.Logger.Warning("[SnR] Could not spawn fire mine: entity type spellsandrunes:fire-mine was not loaded.");
+            return;
+        }
 
-            world.GetEntitiesAround(center, radius, radius, e =>
-            {
-                if (e.EntityId == caster.EntityId || e is not EntityAgent) return false;
-                double dist = Math.Max(0.2, e.SidedPos.XYZ.DistanceTo(center));
-                float scaledDamage = damage * (float)Math.Max(0.25, 1.0 - dist / radius);
-                e.ReceiveDamage(new DamageSource
-                {
-                    Source = EnumDamageSource.Entity,
-                    SourceEntity = caster,
-                    Type = EnumDamageType.Fire,
-                }, scaledDamage);
-                Vec3d away = (e.SidedPos.XYZ - center).Normalize();
-                e.SidedPos.Motion.Add(away.X * 0.28, 0.18, away.Z * 0.28);
-                return false;
-            });
+        var entity = world.ClassRegistry.CreateEntity(entityType);
+        if (entity == null)
+        {
+            world.Api?.Logger.Warning("[SnR] Could not spawn fire mine: class registry returned null for EntityFireMine.");
+            return;
+        }
 
-            FireOrb.BroadcastFx(world, "fire_mine_burst", center, new Vec3d(0, 1, 0), spellLevel);
-        }, 900);
+        entity.Pos.SetPos(center);
+        entity.Pos.Motion.Set(0, 0, 0);
+        entity.WatchedAttributes.SetLong(EntityFireMine.OwnerEntityIdAttribute, caster.EntityId);
+        entity.WatchedAttributes.SetInt(EntityFireMine.SpellLevelAttribute, spellLevel);
+        entity.WatchedAttributes.SetFloat(EntityFireMine.RadiusAttribute, Radius * GetRangeMultiplier(spellLevel));
+        entity.WatchedAttributes.SetFloat(EntityFireMine.DamageAttribute, Damage * GetDamageMultiplier(spellLevel));
+
+        world.SpawnEntity(entity);
+#if DEBUG
+        world.Api?.Logger.Notification("[SnR] Spawned fire mine entity {0} at {1:0.00}, {2:0.00}, {3:0.00}.", entity.EntityId, center.X, center.Y, center.Z);
+#endif
     }
 
     public static void SpawnArmFx(IWorldAccessor world, Vec3d center, int spellLevel)

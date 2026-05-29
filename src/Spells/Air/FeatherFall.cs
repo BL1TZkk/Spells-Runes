@@ -6,7 +6,7 @@ using Vintagestory.API.MathTools;
 namespace SpellsAndRunes.Spells.Air;
 
 /// <summary>
-/// Tier I Utility — Instantly arrests the caster's momentum mid-air,
+/// Tier I Utility - instantly arrests the caster's momentum mid-air,
 /// firing a burst of compressed air downward beneath them.
 /// </summary>
 public class FeatherFall : Spell
@@ -23,13 +23,13 @@ public class FeatherFall : Spell
     public override float CastTime => 0.5f;
 
     public override string? AnimationCode => "air_wind_feather_fall";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => true;
 
     public override (int col, int row) TreePosition => (0, 0);
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
-        // Motion is killed client-side via MsgFreezeMotion (player physics are client-authoritative)
+        // Motion is killed client-side via MsgFreezeMotion because player physics are client-authoritative.
     }
 
     [ThreadStatic] private static SimpleParticleProperties? _pool;
@@ -46,7 +46,7 @@ public class FeatherFall : Spell
         p.MinQuantity       = 1;
         p.AddQuantity       = 0;
 
-        // ── Downward jet ──────────────────────────────────────────────────────────
+        // Downward jet.
         p.WithTerrainCollision = false;
         p.GravityEffect        = 0.3f;
         p.AddVelocity          = new Vec3f(0.3f, 0.5f, 0.3f);
@@ -77,7 +77,7 @@ public class FeatherFall : Spell
             world.SpawnParticles(p);
         }
 
-        // ── Radial shockwave ring ─────────────────────────────────────────────────
+        // Radial shockwave ring.
         p.GravityEffect = 0.1f;
         p.AddVelocity   = new Vec3f(0.4f, 0.2f, 0.4f);
         p.AddPos        = new Vec3d(0.05, 0.05, 0.05);
@@ -106,7 +106,7 @@ public class FeatherFall : Spell
             world.SpawnParticles(p);
         }
 
-        // ── Bright core flash ─────────────────────────────────────────────────────
+        // Bright core flash.
         p.GravityEffect = 0f;
         p.AddVelocity   = new Vec3f(0.1f, 0.5f, 0.1f);
         p.AddPos        = new Vec3d(0.03, 0.03, 0.03);

@@ -4,6 +4,7 @@ using System.Linq;
 using Cairo;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using SpellsAndRunes.Lore;
 using SpellsAndRunes.Spells;
 using SpellsAndRunes.Network;
 
@@ -42,10 +43,12 @@ public class GuiDialogSpellbook : GuiDialog
 
     // ── Tab / tree state ──────────────────────────────────────────────────────
     private int    _mainTab = 0, _elemTab = 0;
+    private int    _loreCategory = 0;
     private readonly double[] _panX    = new double[4];
     private readonly double[] _panY    = new double[4];
     private readonly bool[]   _panInit = new bool[4];
     private readonly string?[] _selId  = new string?[4];
+    private readonly string?[] _selectedLoreEntry = new string?[2];
     private bool   _isPanning = false, _panMoved = false;
     private double _panStartMx, _panStartMy, _panStartPx, _panStartPy;
 
@@ -60,10 +63,12 @@ public class GuiDialogSpellbook : GuiDialog
     // ── Hit regions (rebuilt each draw) ──────────────────────────────────────
     private readonly (double x, double y, double w, double h)[] _mainTabR = new (double,double,double,double)[5];
     private readonly (double x, double y, double w, double h)[] _elemTabR = new (double,double,double,double)[4];
+    private readonly (double x, double y, double w, double h)[] _loreTabR = new (double,double,double,double)[2];
     private (double x, double y, double w, double h) _canvasR;
     private readonly List<(string id, double x, double y, double w, double h)> _nodeR = new();
     private readonly (double cx, double cy, double r)[] _wheelSlotR = new (double,double,double)[WheelSlots];
     private readonly List<(string id, double x, double y, double w, double h)> _cardR  = new();
+    private readonly List<(string id, double x, double y, double w, double h)> _loreEntryR = new();
     private (double x, double y, double w, double h) _addBtn, _unlockBtn;
     private bool _hasAddBtn, _hasUnlockBtn;
     private readonly (double cx, double cy, double r)[] _pickerSlotR = new (double,double,double)[WheelSlots];
@@ -170,6 +175,8 @@ public class GuiDialogSpellbook : GuiDialog
     private void OnDraw(Context ctx, ImageSurface surface, ElementBounds bounds)
     {
         _nodeR.Clear(); _cardR.Clear();
+        _loreEntryR.Clear();
+        for (int i = 0; i < _loreTabR.Length; i++) _loreTabR[i] = (-9999, -9999, 0, 0);
         _hasAddBtn = false; _hasUnlockBtn = false;
         double W = bounds.InnerWidth, H = bounds.InnerHeight;
 
@@ -199,7 +206,7 @@ public class GuiDialogSpellbook : GuiDialog
         TextAt(ctx, "Spellbook", 12, (TitleH - sbH) / 2);
 
         // Header: Flux Alignment + ornamental separator
-        int maxLvl = data != null ? Elements.Max(el => data.GetElementLevel(el)) : 1;
+        int maxLvl = data?.GetFluxAlignmentLevel() ?? 1;
         string[] roman = { "", "I","II","III","IV","V","VI","VII","VIII","IX","X" };
         string sub = $"Flux Alignment  {(maxLvl <= 10 ? roman[maxLvl] : maxLvl.ToString())}";
         ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
@@ -252,7 +259,7 @@ public class GuiDialogSpellbook : GuiDialog
         {
             case 0: DrawSpellTreeContent(ctx, 0, cy, W, H - cy, data); break;
             case 1: DrawSpellWheelTab(ctx, 0, cy, W, H - cy, data);    break;
-            case 2: DrawLoreTab(ctx, 0, cy, W, H - cy); break;
+            case 2: DrawLoreTab(ctx, 0, cy, W, H - cy, data); break;
             case 3: DrawRunesTab(ctx, 0, cy, W, H - cy); break;
             case 4: DrawFluxAlignmentTab(ctx, 0, cy, W, H - cy, data); break;
         }
@@ -265,18 +272,23 @@ public class GuiDialogSpellbook : GuiDialog
     // ── Spell Tree content ────────────────────────────────────────────────────
     private void DrawSpellTreeContent(Context ctx, double x, double y, double w, double h, PlayerSpellData? data)
     {
-        // Only show tabs for unlocked elements; null data = show all (debug)
+        bool magicUnlocked = data?.IsFluxUnlocked ?? false;
+
         var visible = Enumerable.Range(0, 4)
-            .Where(j => data == null || data.IsElementUnlocked(Elements[j]))
+            .Where(j => magicUnlocked && data!.IsElementUnlocked(Elements[j]))
             .ToList();
-
-        if (visible.Count == 0) visible.Add(0); // fallback: always show at least Fire
-
-        // If current tab is no longer visible, snap to first visible
-        if (!visible.Contains(_elemTab)) _elemTab = visible[0];
 
         // Clear all hit regions, then fill only visible ones
         for (int j = 0; j < 4; j++) _elemTabR[j] = (-9999, -9999, 0, 0);
+
+        if (visible.Count == 0)
+        {
+            DrawEmptySpellTree(ctx, x, y, w, h);
+            return;
+        }
+
+        // If current tab is no longer visible, snap to first visible
+        if (!visible.Contains(_elemTab)) _elemTab = visible[0];
 
         double etabW = w / visible.Count;
         ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
@@ -306,6 +318,37 @@ public class GuiDialogSpellbook : GuiDialog
         DrawElementLevelHeader(ctx, x, ey, w, data);
         const double lvlH = 26;
         DrawElementCanvas(ctx, x, ey + lvlH + 2, w, eh - lvlH - 2, data);
+    }
+
+    private void DrawEmptySpellTree(Context ctx, double x, double y, double w, double h)
+    {
+        C(ctx, 0xFF060A10); Rect(ctx, x, y, w, h); ctx.Fill();
+
+        double cx = x + w / 2;
+        double cy = y + h / 2;
+        double sigR = Math.Min(w, h) * 0.22;
+
+        ctx.SetSourceRGBA(0.42, 0.39, 0.36, 0.08);
+        ctx.LineWidth = 1.2;
+        ctx.Arc(cx, cy, sigR, 0, Math.PI * 2); ctx.Stroke();
+        ctx.Arc(cx, cy, sigR * 0.62, 0, Math.PI * 2); ctx.Stroke();
+        for (int k = 0; k < 6; k++)
+        {
+            double a1 = k * Math.PI / 3;
+            double a2 = (k + 2) % 6 * Math.PI / 3;
+            ctx.MoveTo(cx + Math.Cos(a1) * sigR, cy + Math.Sin(a1) * sigR);
+            ctx.LineTo(cx + Math.Cos(a2) * sigR, cy + Math.Sin(a2) * sigR);
+            ctx.Stroke();
+        }
+
+        ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
+        ctx.SetFontSize(13);
+        C(ctx, ClrSub, 0.62);
+        TextCenter(ctx, "No spells discovered.", cx, cy + sigR + 26);
+
+        C(ctx, ClrSep, 0.35);
+        ctx.LineWidth = 1;
+        Rect(ctx, x, y, w, h); ctx.Stroke();
     }
 
     // ── Element level header ──────────────────────────────────────────────────
@@ -456,12 +499,13 @@ public class GuiDialogSpellbook : GuiDialog
     {
         bool unlocked  = data?.IsUnlocked(spell.Id) ?? false;
         bool prereqMet = data != null && SpellTree.CanUnlock(spell.Id, data);
+        bool alignmentMet = data != null && SpellTree.HasRequiredFluxAlignment(spell, data);
         bool sel       = _selId[ei] == spell.Id;
         var (ntx, nty) = NodeTL(ox, oy, maxRow, spell.TreePosition.col, spell.TreePosition.row);
 
         _nodeR.Add((spell.Id, ntx, nty, NodeW, NodeH));
 
-        double alpha = unlocked ? 1.0 : prereqMet ? 0.58 : 0.26;
+        double alpha = unlocked ? 1.0 : prereqMet ? 0.58 : alignmentMet ? 0.26 : 0.16;
         var (er, eg, eb)  = RGBA(ElemColors[ei]);
         var (nr, ng, nb)  = RGBA(ElemNodeBg[ei]);
         var (tr2, tg, tb) = RGBA(ElemTextCol[ei]);
@@ -555,6 +599,7 @@ public class GuiDialogSpellbook : GuiDialog
 
         bool unlocked  = data?.IsUnlocked(spell.Id) ?? false;
         bool prereqMet = data != null && SpellTree.CanUnlock(spell.Id, data);
+        bool alignmentMet = data != null && SpellTree.HasRequiredFluxAlignment(spell, data);
         bool canAfford = data != null && SpellTree.CanAffordUnlock(spell.Id, data);
         var (er, eg, eb)  = RGBA(ElemColors[ei]);
         var (tr2, tg, tb) = RGBA(ElemTextCol[ei]);
@@ -631,6 +676,12 @@ public class GuiDialogSpellbook : GuiDialog
             int cost = (int)spell.Tier, sp = data?.GetSkillPoints(spell.Element) ?? 0;
             ctx.SetFontSize(10); ctx.SetSourceRGBA(0.91, 0.66, 0.25, 1);
             TextAt(ctx, $"Cost: {cost} SP  (have {sp})", px, cy + 2); cy += 14;
+            if (!alignmentMet)
+            {
+                int haveAlignment = data?.GetFluxAlignmentLevel() ?? 1;
+                ctx.SetSourceRGBA(0.75, 0.42, 0.85, 1);
+                TextAt(ctx, $"Requires Flux Alignment {(int)spell.Tier}  (have {haveAlignment})", px, cy + 2); cy += 14;
+            }
 
             if (spell.Prerequisites.Count > 0)
             {
@@ -658,7 +709,7 @@ public class GuiDialogSpellbook : GuiDialog
             if (!prereqMet || !canAfford)
             {
                 ctx.SetFontSize(10); ctx.SetSourceRGBA(0.54, 0.31, 0.31, 1);
-                TextAt(ctx, !prereqMet ? "Prerequisites not met." : "Not enough Skill Points.", px, cy + 2);
+                TextAt(ctx, !alignmentMet ? "Flux Alignment too low." : !prereqMet ? "Prerequisites not met." : "Not enough Skill Points.", px, cy + 2);
             }
         }
     }
@@ -705,7 +756,7 @@ public class GuiDialogSpellbook : GuiDialog
             double sumR = 0, sumG = 0, sumB = 0; int filled = 0;
             for (int i = 0; i < WheelSlots; i++)
             {
-                string? sid = data?.GetHotbarSlot(i);
+                string? sid = data?.IsFluxUnlocked == true ? data.GetHotbarSlot(i) : null;
                 var sp2 = sid != null ? SpellRegistry.Get(sid) : null;
                 if (sp2 == null) continue;
                 var (er, eg, eb) = RGBA(ElemColors[ElemIdx(sp2.Element)]);
@@ -808,7 +859,7 @@ public class GuiDialogSpellbook : GuiDialog
             double scy = wcy + Math.Sin(angle) * orbitR;
             _wheelSlotR[i] = (scx, scy, slotR);
 
-            string? sid  = data?.GetHotbarSlot(i);
+            string? sid  = data?.IsFluxUnlocked == true ? data.GetHotbarSlot(i) : null;
             var spell    = sid != null ? SpellRegistry.Get(sid) : null;
             bool active  = _wheelActive == i;
             bool dragHov = _dragId != null && InCircle(scx, scy, slotR, _mouseX, _mouseY);
@@ -866,8 +917,9 @@ public class GuiDialogSpellbook : GuiDialog
     // ── Known spells ──────────────────────────────────────────────────────────
     private void DrawKnownSpells(Context ctx, double x, double y, double w, double h, PlayerSpellData? data)
     {
-        if (data == null) return;
         _filterBtnR.Clear();
+        if (data == null) return;
+        bool magicUnlocked = data.IsFluxUnlocked;
 
         // Header
         ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
@@ -878,7 +930,7 @@ public class GuiDialogSpellbook : GuiDialog
 
         // Element filter buttons — only unlocked elements + "All"
         var unlockedElems = Enumerable.Range(0, 4)
-            .Where(j => data.IsElementUnlocked(Elements[j]))
+            .Where(j => magicUnlocked && data.IsElementUnlocked(Elements[j]))
             .ToList();
 
         const double fH = 18;
@@ -925,7 +977,7 @@ public class GuiDialogSpellbook : GuiDialog
         int col = 0;
         foreach (var (id, spell) in SpellRegistry.All)
         {
-            if (!data.IsUnlocked(id)) continue;
+            if (!magicUnlocked || !data.IsUnlocked(id)) continue;
             if (_wheelElemFilter >= 0 && ElemIdx(spell.Element) != _wheelElemFilter) continue;
             DrawSpellCard(ctx, spell, x + col * cardW, cardCy, cardW - 2, cardH);
             if (++col >= cols) { col = 0; cardCy += cardH + 2; }
@@ -1064,9 +1116,29 @@ public class GuiDialogSpellbook : GuiDialog
         for (int i = 0; i < MainTabs.Length; i++)
             if (InRect(_mainTabR[i], lx, ly)) { _mainTab = i; Redraw(); e.Handled = true; return; }
 
+        if (_mainTab == 2)
+        {
+            for (int i = 0; i < _loreTabR.Length; i++)
+            {
+                if (!InRect(_loreTabR[i], lx, ly)) continue;
+                _loreCategory = i;
+                Redraw(); e.Handled = true; return;
+            }
+
+            foreach (var (id, rx, ry, rw, rh) in _loreEntryR)
+            {
+                if (!InRect(rx, ry, rw, rh, lx, ly)) continue;
+                _selectedLoreEntry[_loreCategory] = id;
+                Redraw(); e.Handled = true; return;
+            }
+        }
+
         // Element tabs
-        for (int j = 0; j < 4; j++)
-            if (InRect(_elemTabR[j], lx, ly)) { _elemTab = j; _panInit[j] = false; Redraw(); e.Handled = true; return; }
+        if (_mainTab == 0)
+        {
+            for (int j = 0; j < 4; j++)
+                if (InRect(_elemTabR[j], lx, ly)) { _elemTab = j; _panInit[j] = false; Redraw(); e.Handled = true; return; }
+        }
 
         // Canvas pan/click start
         if (_mainTab == 0 && InRect(_canvasR, lx, ly))
@@ -1209,10 +1281,8 @@ public class GuiDialogSpellbook : GuiDialog
         SpellTier[] tiers = { SpellTier.Novice, SpellTier.Apprentice, SpellTier.Adept, SpellTier.Master };
         string[] tierLabel = { "Novice", "Apprentice", "Adept", "Master" };
 
-        // Current highest unlocked tier (1-4, 0 = none)
-        int alignTier = 0;
-        for (int i = 3; i >= 0; i--)
-            if (data?.IsUnlocked(ids[i]) ?? false) { alignTier = i + 1; break; }
+        // Current alignment tier (1-4). Tier I is active once Flux has awakened.
+        int alignTier = fluxUnlocked ? data?.GetFluxAlignmentLevel() ?? 1 : 0;
 
         // ── Background decorations ─────────────────────────────────────────────
         var bgr = new Random(77777);
@@ -1320,8 +1390,8 @@ public class GuiDialogSpellbook : GuiDialog
 
         for (int i = 0; i < 4; i++)
         {
-            bool unlocked  = data?.IsUnlocked(ids[i]) ?? false;
-            bool available = fluxUnlocked && (i == 0 || (data?.IsUnlocked(ids[i - 1]) ?? false));
+            bool unlocked  = fluxUnlocked && alignTier >= i + 1;
+            bool available = fluxUnlocked && alignTier + 1 == i + 1;
             bool isCurrent = alignTier == i + 1;
 
             double bx = panelX;
@@ -1440,7 +1510,7 @@ public class GuiDialogSpellbook : GuiDialog
         }
     }
 
-    private void DrawLoreTab(Context ctx, double x, double y, double w, double h)
+    private void DrawLoreTab(Context ctx, double x, double y, double w, double h, PlayerSpellData? data)
     {
         var bg = new Random(9001);
 
@@ -1501,6 +1571,118 @@ public class GuiDialogSpellbook : GuiDialog
                 tx += te.Width + 4 + lr.NextDouble() * 9;
             }
             ty += 13 + lr.NextDouble() * 4;
+        }
+
+        double pad = 12;
+        double leftW = Math.Min(270, Math.Max(190, w * 0.34));
+        double gap = 10;
+        double leftX = x + pad;
+        double topY = y + pad;
+        double paneH = h - pad * 2;
+        double rightX = leftX + leftW + gap;
+        double rightW = Math.Max(120, w - leftW - gap - pad * 2);
+
+        C(ctx, ClrBg, 0.78); RRect(ctx, leftX, topY, leftW, paneH, 6); ctx.Fill();
+        C(ctx, ClrBorder, 0.45); ctx.LineWidth = 1; RRect(ctx, leftX, topY, leftW, paneH, 6); ctx.Stroke();
+        C(ctx, ClrBg, 0.70); RRect(ctx, rightX, topY, rightW, paneH, 6); ctx.Fill();
+        C(ctx, ClrBorder, 0.40); RRect(ctx, rightX, topY, rightW, paneH, 6); ctx.Stroke();
+
+        string[] categoryLabels = { "Lore", "Journal" };
+        SpellbookLoreCategory[] categories = { SpellbookLoreCategory.Lore, SpellbookLoreCategory.Journal };
+        double navX = leftX + 8;
+        double navY = topY + 8;
+        double navW = leftW - 16;
+        double navH = 24;
+        double navBtnW = navW / categoryLabels.Length;
+
+        ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
+        ctx.SetFontSize(10);
+        for (int i = 0; i < categoryLabels.Length; i++)
+        {
+            double bx = navX + i * navBtnW;
+            bool active = _loreCategory == i;
+            _loreTabR[i] = (bx, navY, navBtnW, navH);
+
+            C(ctx, active ? ClrActive : ClrBgAlt, active ? 0.55 : 0.45);
+            RRect(ctx, bx, navY, navBtnW, navH, i == 0 || i == categoryLabels.Length - 1 ? 5 : 0); ctx.Fill();
+            C(ctx, active ? ClrGold : ClrBorder, active ? 0.85 : 0.35);
+            Rect(ctx, bx, navY, navBtnW, navH); ctx.Stroke();
+            C(ctx, active ? ClrGold : ClrText, active ? 0.95 : 0.62);
+            TextCenter(ctx, categoryLabels[i], bx + navBtnW / 2, navY + navH / 2 + 4);
+        }
+
+        var category = categories[Math.Clamp(_loreCategory, 0, categories.Length - 1)];
+        var visibleEntries = SpellbookLoreRegistry.ByCategory(category)
+            .Where(entry => data?.IsLoreEntryUnlocked(entry.Id) ?? entry.UnlockedByDefault)
+            .ToList();
+
+        int categoryIndex = _loreCategory;
+        string? selectedId = _selectedLoreEntry[categoryIndex];
+        if (selectedId == null || visibleEntries.All(entry => entry.Id != selectedId))
+        {
+            selectedId = visibleEntries.FirstOrDefault()?.Id;
+            _selectedLoreEntry[categoryIndex] = selectedId;
+        }
+
+        double listY = navY + navH + 10;
+        double rowX = leftX + 8;
+        double rowW = leftW - 16;
+        double rowH = 50;
+        ctx.Save();
+        Rect(ctx, leftX + 4, listY - 2, leftW - 8, Math.Max(0, topY + paneH - listY - 6));
+        ctx.Clip();
+
+        foreach (var entry in visibleEntries)
+        {
+            if (listY + rowH > topY + paneH - 6) break;
+            bool active = entry.Id == selectedId;
+            _loreEntryR.Add((entry.Id, rowX, listY, rowW, rowH));
+
+            C(ctx, active ? ClrBgAlt : ClrBg, active ? 0.92 : 0.30);
+            RRect(ctx, rowX, listY, rowW, rowH - 4, 4); ctx.Fill();
+            C(ctx, active ? ClrGold : ClrBorder, active ? 0.55 : 0.20);
+            RRect(ctx, rowX, listY, rowW, rowH - 4, 4); ctx.Stroke();
+
+            ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
+            ctx.SetFontSize(12); C(ctx, active ? ClrGold : ClrText, active ? 0.95 : 0.78);
+            TextAt(ctx, entry.Title, rowX + 8, listY + 11);
+
+            ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
+            ctx.SetFontSize(9); C(ctx, ClrSub, active ? 0.78 : 0.55);
+            string preview = entry.Preview.Length > 72 ? entry.Preview[..69].TrimEnd() + "..." : entry.Preview;
+            TextAt(ctx, preview, rowX + 8, listY + 30);
+
+            listY += rowH;
+        }
+        ctx.Restore();
+
+        var selected = selectedId != null ? SpellbookLoreRegistry.Get(selectedId) : null;
+        double contentX = rightX + 16;
+        double contentY = topY + 18;
+        double contentW = rightW - 32;
+
+        if (selected == null)
+        {
+            ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
+            ctx.SetFontSize(12); C(ctx, ClrSub, 0.65);
+            TextAt(ctx, "No entries discovered.", contentX, contentY + 8);
+            return;
+        }
+
+        ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
+        ctx.SetFontSize(17); C(ctx, ClrGold, 0.95);
+        TextAt(ctx, selected.Title, contentX, contentY);
+
+        C(ctx, ClrSep, 0.45); ctx.LineWidth = 1;
+        ctx.MoveTo(contentX, contentY + 24); ctx.LineTo(contentX + contentW, contentY + 24); ctx.Stroke();
+
+        ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Normal);
+        ctx.SetFontSize(12); C(ctx, ClrText, 0.86);
+        double bodyY = contentY + 44;
+        foreach (var paragraph in selected.Body)
+        {
+            if (bodyY > topY + paneH - 14) break;
+            bodyY = WrapText(ctx, paragraph, contentX, bodyY, contentW, 15) + 8;
         }
     }
 

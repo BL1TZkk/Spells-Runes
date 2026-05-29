@@ -19,4 +19,5 @@ text = re.sub(r'\{[^{}]*"texture":\s*"#[^"]*emissive[^"]*"[^{}]*\}', add_glow, t
 with open(path, "w", encoding="utf-8") as f:
     f.write(text)
 
+
 print(f"Added glow to {count} faces in {path}")

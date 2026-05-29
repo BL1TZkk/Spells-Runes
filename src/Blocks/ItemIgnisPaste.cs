@@ -27,7 +27,7 @@ public class ItemIgnisPaste : Item
         byEntity.WatchedAttributes.MarkPathDirty("snr:firepower");
 
         world.PlaySoundAt(
-            new AssetLocation("sounds/effect/fire"),
+            new AssetLocation("sounds/environment/fire"),
             byEntity.Pos.X,
             byEntity.Pos.Y,
             byEntity.Pos.Z

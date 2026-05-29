@@ -22,11 +22,23 @@ public static class SpellTree
         if (spell.RequiredActivator != null && !data.HasActivator(spell.RequiredActivator))
             return false;
 
+        if (!HasRequiredFluxAlignment(spell, data))
+            return false;
+
         foreach (var prereq in spell.Prerequisites)
             if (!data.IsUnlocked(prereq)) return false;
 
         return true;
     }
+
+    public static bool HasRequiredFluxAlignment(string spellId, PlayerSpellData data)
+    {
+        var spell = SpellRegistry.Get(spellId);
+        return spell != null && HasRequiredFluxAlignment(spell, data);
+    }
+
+    public static bool HasRequiredFluxAlignment(Spell spell, PlayerSpellData data)
+        => data.GetFluxAlignmentLevel() >= (int)spell.Tier;
 
     /// <summary>
     /// Returns true if player has enough SP to afford the spell.
@@ -51,6 +63,9 @@ public static class SpellTree
         var spell = SpellRegistry.Get(spellId);
         if (spell == null)
             return UnlockResult.NotFound;
+
+        if (!HasRequiredFluxAlignment(spell, data))
+            return UnlockResult.FluxAlignmentTooLow;
 
         if (!CanUnlock(spellId, data))
             return UnlockResult.PrerequisitesMissing;
@@ -77,4 +92,5 @@ public enum UnlockResult
     NotFound,
     PrerequisitesMissing,
     InsufficientXp, // also means insufficient SP
+    FluxAlignmentTooLow,
 }

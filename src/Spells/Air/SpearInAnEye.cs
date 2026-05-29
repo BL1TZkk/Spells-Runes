@@ -33,7 +33,7 @@ public class SpearInAnEye : Spell
 
     public static Vec3d GetCenter(EntityAgent caster)
     {
-        var center = caster.SidedPos.XYZ.Add(caster.SidedPos.GetViewVector().ToVec3d().Normalize() * 8.5).Add(0, 0.5, 0);
+        var center = caster.Pos.XYZ.Add(caster.Pos.GetViewVector().ToVec3d().Normalize() * 8.5).Add(0, 0.5, 0);
         return ClampToSurface(caster.World, center);
     }
 
@@ -60,11 +60,11 @@ public class SpearInAnEye : Spell
             world.GetEntitiesAround(center, StormsEye.Radius * 1.6f, StormsEye.Radius * 1.6f, e =>
             {
                 if (e.EntityId == caster.EntityId || e is not EntityAgent) return false;
-                Vec3d toCenter = center - e.SidedPos.XYZ;
+                Vec3d toCenter = center - e.Pos.XYZ;
                 double dist = toCenter.Length();
                 if (dist <= 0.01 || dist > StormsEye.Radius * 1.6f) return false;
                 var dir = toCenter.Normalize();
-                e.SidedPos.Motion.Set(dir.X * 0.1, Math.Max(e.SidedPos.Motion.Y * 0.2, -0.02), dir.Z * 0.1);
+                e.Pos.Motion.Set(dir.X * 0.1, Math.Max(e.Pos.Motion.Y * 0.2, -0.02), dir.Z * 0.1);
                 return false;
             });
 
@@ -90,9 +90,9 @@ public class SpearInAnEye : Spell
                     {
                         SetSpearOrientation(spear, dir);
                         Vec3d launchMotion = dir * (SpearSpeedBps / 60f) * (1f + 0.10f * (spellLevel - 1));
-                        spear.ServerPos.Motion.Set(launchMotion);
                         spear.Pos.Motion.Set(launchMotion);
-                        spear.SidedPos.Motion.Set(launchMotion);
+                        spear.Pos.Motion.Set(launchMotion);
+                        spear.Pos.Motion.Set(launchMotion);
                         EnforceSpearSpeed(world, spear, launchMotion);
                     }
                 }
@@ -110,8 +110,8 @@ public class SpearInAnEye : Spell
         double horizontal = Math.Sqrt(lookDir.X * lookDir.X + lookDir.Z * lookDir.Z);
         double pitch = -Math.Atan2(lookDir.Y, horizontal);
         yaw += Math.PI / 2.0;
-        spear.ServerPos.Yaw = (float)yaw;
-        spear.ServerPos.Pitch = (float)pitch;
+        spear.Pos.Yaw = (float)yaw;
+        spear.Pos.Pitch = (float)pitch;
         spear.Pos.Yaw = (float)yaw;
         spear.Pos.Pitch = (float)pitch;
     }
@@ -139,9 +139,9 @@ public class SpearInAnEye : Spell
             float t = Math.Clamp(elapsed / EnforceSpeedSeconds, 0f, 1f);
             float eased = StartSpeedFactor + (1f - StartSpeedFactor) * (float)Math.Pow(t, AccelExponent);
             Vec3d scaled = motion * eased;
-            spear.ServerPos.Motion.Set(scaled);
             spear.Pos.Motion.Set(scaled);
-            spear.SidedPos.Motion.Set(scaled);
+            spear.Pos.Motion.Set(scaled);
+            spear.Pos.Motion.Set(scaled);
         }, 50);
     }
 

@@ -10,6 +10,9 @@ namespace SpellsAndRunes.Spells.Air;
 
 public class TripleWindSlash : Spell
 {
+    private const int FirstReleaseFrame = 9;
+    private static readonly int[] ReleaseFrames = { 9, 17, 25 };
+
     public override string Id          => "air_triple_wind_slash";
     public override string Name        => "Triple Wind Slash";
     public override string Description => "Shapes three wind blades in quick succession and launches them forward, each following the last.";
@@ -19,9 +22,9 @@ public class TripleWindSlash : Spell
     public override SpellType    Type    => SpellType.Offense;
 
     public override float FluxCost => 45f;
-    public override float CastTime => 1.2f;
+    public override float CastTime => FirstReleaseFrame / 30f;
     public override string? AnimationCode => "air_triple_wind_slash";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => true;
 
     public override IReadOnlyList<string> Prerequisites => ["air_wind_slash"];
 
@@ -34,16 +37,17 @@ public class TripleWindSlash : Spell
 
         float range = WindSlash.Range * GetRangeMultiplier(spellLevel) * 1.1f;
         float damage = WindSlash.Damage * GetDamageMultiplier(spellLevel) * 0.8f;
-        const int delayMs = 320;
+        float castTimeMultiplier = GetCastTimeMultiplier(spellLevel);
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < ReleaseFrames.Length; i++)
         {
+            int delayMs = FrameToMs(ReleaseFrames[i] - FirstReleaseFrame, castTimeMultiplier);
             api.Event.RegisterCallback(_ =>
             {
                 if (!caster.Alive) return;
-                var lookDir = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
-                var fxOrigin = caster.SidedPos.XYZ.Add(0, 0, 0);
-                var hitOrigin = caster.SidedPos.XYZ.Add(0, caster.LocalEyePos.Y - 0.1, 0);
+                var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
+                var fxOrigin = caster.Pos.XYZ.Add(0, 0, 0);
+                var hitOrigin = caster.Pos.XYZ.Add(0, caster.LocalEyePos.Y - 0.1, 0);
                 var origin = fxOrigin;
                 if (world.Side == EnumAppSide.Server && world.Api != null)
                 {
@@ -72,7 +76,10 @@ public class TripleWindSlash : Spell
                     }
                 }
 
-            }, i * delayMs);
+            }, delayMs);
         }
     }
+
+    private static int FrameToMs(int frame, float castTimeMultiplier)
+        => (int)Math.Round(frame / 30.0 * 1000.0 * castTimeMultiplier);
 }

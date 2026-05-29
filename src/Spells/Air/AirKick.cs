@@ -25,7 +25,7 @@ public class AirKick : Spell
     public override float CastTime => 0.7f;
 
     public override string? AnimationCode        => "air_wind_kick";
-    public override bool    AnimationUpperBodyOnly => false;
+    public override bool    AnimationTakesOverBody => true;
 
     public override (int col, int row) TreePosition => (1, 1);
 
@@ -49,18 +49,18 @@ public class AirKick : Spell
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
         float dmgMul = GetDamageMultiplier(spellLevel);
-        var   origin = caster.SidedPos.XYZ.Add(0, 0.5, 0);
+        var   origin = caster.Pos.XYZ.Add(0, 0.5, 0);
 
         world.GetEntitiesAround(origin, LaunchKnockbackRadius, LaunchKnockbackRadius, e =>
         {
             if (e.EntityId == caster.EntityId) return false;
             if (e is not EntityAgent) return false;
-            Vec3d dir  = e.SidedPos.XYZ - origin;
+            Vec3d dir  = e.Pos.XYZ - origin;
             double dist = dir.Length();
             if (dist > LaunchKnockbackRadius) return false;
             dir = dir.Normalize();
             float falloff = 1f - (float)(dist / LaunchKnockbackRadius) * 0.5f;
-            e.SidedPos.Motion.Add(dir.X * LaunchKnockbackForce * dmgMul * falloff, 0.2 * falloff, dir.Z * LaunchKnockbackForce * dmgMul * falloff);
+            e.Pos.Motion.Add(dir.X * LaunchKnockbackForce * dmgMul * falloff, 0.2 * falloff, dir.Z * LaunchKnockbackForce * dmgMul * falloff);
             return false;
         });
     }

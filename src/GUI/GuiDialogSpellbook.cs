@@ -1580,6 +1580,8 @@ public class GuiDialogSpellbook : GuiDialog
 
         C(ctx, ClrBg, 0.78); RRect(ctx, leftX, topY, leftW, paneH, 6); ctx.Fill();
         C(ctx, ClrBorder, 0.45); ctx.LineWidth = 1; RRect(ctx, leftX, topY, leftW, paneH, 6); ctx.Stroke();
+
+        // Right panel — pre-draw with neutral background; theme tint applied after selection resolved
         C(ctx, ClrBg, 0.70); RRect(ctx, rightX, topY, rightW, paneH, 6); ctx.Fill();
         C(ctx, ClrBorder, 0.40); RRect(ctx, rightX, topY, rightW, paneH, 6); ctx.Stroke();
 
@@ -1641,20 +1643,38 @@ public class GuiDialogSpellbook : GuiDialog
             bool active = grp.Key == selectedGroup;
             _loreEntryR.Add((grp.First().Id, rowX, listY, rowW, rowH));
 
-            C(ctx, active ? ClrBgAlt : ClrBg, active ? 0.92 : 0.30);
+            string entryTheme = grp.First().Theme;
+            var (ear, eag, eab) = LoreTheme.GetAccent(entryTheme);
+
+            // Card background — tinted with theme color when active
+            if (active)
+            {
+                var (epbr, epbg, epbb) = LoreTheme.GetBackground(entryTheme);
+                ctx.SetSourceRGBA(epbr, epbg, epbb, 0.85);
+            }
+            else C(ctx, ClrBg, 0.30);
             RRect(ctx, rowX, listY, rowW, rowH - 4, 4); ctx.Fill();
-            C(ctx, active ? ClrGold : ClrBorder, active ? 0.55 : 0.20);
+
+            // Border — theme accent when active
+            ctx.SetSourceRGBA(ear, eag, eab, active ? 0.70 : 0.18);
+            ctx.LineWidth = active ? 1.2 : 0.8;
             RRect(ctx, rowX, listY, rowW, rowH - 4, 4); ctx.Stroke();
 
+            // Left accent stripe
+            ctx.SetSourceRGBA(ear, eag, eab, active ? 0.90 : 0.30);
+            RRect(ctx, rowX, listY, 3, rowH - 4, 4); ctx.Fill();
+
             ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
-            ctx.SetFontSize(12); C(ctx, active ? ClrGold : ClrText, active ? 0.95 : 0.78);
+            ctx.SetFontSize(12);
+            if (active) ctx.SetSourceRGBA(ear, eag, eab, 0.98);
+            else C(ctx, ClrText, 0.78);
             string groupLabel = string.IsNullOrEmpty(grp.Key) ? grp.First().Title : grp.Key;
-            TextAt(ctx, TruncateToWidth(ctx, groupLabel, rowW - 20), rowX + 8, listY + 14);
+            TextAt(ctx, TruncateToWidth(ctx, groupLabel, rowW - 20), rowX + 10, listY + 14);
 
             ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
             ctx.SetFontSize(11); C(ctx, ClrSub, active ? 0.78 : 0.50);
             int cnt = grp.Count();
-            if (cnt > 1) TextAt(ctx, $"{cnt} entries", rowX + 8, listY + 32);
+            if (cnt > 1) TextAt(ctx, $"{cnt} entries", rowX + 10, listY + 32);
 
             listY += rowH;
         }
@@ -1674,14 +1694,30 @@ public class GuiDialogSpellbook : GuiDialog
             return;
         }
 
-        // Theme watermark — subtle background illustration in the detail panel
+        // Theme right-panel tint overlay + border
         if (!string.IsNullOrEmpty(selected.Theme))
         {
-            double illS = Math.Min(rightW, paneH) * 0.38;
+            var (tbgr, tbgg, tbgb) = LoreTheme.GetBackground(selected.Theme);
+            var (tacr, tacg, tacb) = LoreTheme.GetAccent(selected.Theme);
+            ctx.SetSourceRGBA(tbgr, tbgg, tbgb, 0.55);
+            RRect(ctx, rightX, topY, rightW, paneH, 6); ctx.Fill();
+            ctx.SetSourceRGBA(tacr, tacg, tacb, 0.45);
+            ctx.LineWidth = 1.2;
+            RRect(ctx, rightX, topY, rightW, paneH, 6); ctx.Stroke();
+
+            // Theme accent header strip on right panel
+            ctx.SetSourceRGBA(tacr, tacg, tacb, 0.16);
+            RRect(ctx, rightX, topY, rightW, 32, 6); ctx.Fill();
+            ctx.SetSourceRGBA(tacr, tacg, tacb, 0.30);
+            ctx.LineWidth = 0.8;
+            ctx.MoveTo(rightX, topY + 32); ctx.LineTo(rightX + rightW, topY + 32); ctx.Stroke();
+
+            // Watermark illustration — center-right of panel
+            double illS = Math.Min(rightW, paneH) * 0.40;
             LoreTheme.DrawIllustration(ctx, selected.Theme,
-                rightX + rightW - illS * 0.55,
-                topY + paneH * 0.40,
-                illS, 0.09);
+                rightX + rightW * 0.72,
+                topY + paneH * 0.45,
+                illS, 0.11);
         }
 
         // Series siblings (only unlocked ones visible to player)
@@ -1740,9 +1776,15 @@ public class GuiDialogSpellbook : GuiDialog
         }
 
         // Title
-        double titleY = topY + 36;
+        double titleY = topY + 38;
         ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
-        ctx.SetFontSize(15); C(ctx, ClrGold, 0.95);
+        ctx.SetFontSize(15);
+        if (!string.IsNullOrEmpty(selected.Theme))
+        {
+            var (ttlr, ttlg, ttlb) = LoreTheme.GetTitleColor(selected.Theme);
+            ctx.SetSourceRGBA(ttlr, ttlg, ttlb, 0.97);
+        }
+        else C(ctx, ClrGold, 0.95);
         TextAt(ctx, selected.Title, contentX, titleY);
         if (!string.IsNullOrEmpty(selected.Theme))
         {

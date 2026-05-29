@@ -46,40 +46,76 @@ public class GuiDialogReadScroll : GuiDialog
     {
         double W = bounds.InnerWidth, H = bounds.InnerHeight;
 
+        var (ar, ag, ab)   = LoreTheme.GetAccent(_entry.Theme);
+        var (bgr, bgg, bgb) = LoreTheme.GetBackground(_entry.Theme);
+        var (pr, pg, pb)   = LoreTheme.GetParchment(_entry.Theme);
+        var (tr, tg, tb)   = LoreTheme.GetTitleColor(_entry.Theme);
+        string groupLabel  = LoreTheme.GetGroupLabel(_entry.Theme);
+
         // ── Background ────────────────────────────────────────────────────────
-        ctx.SetSourceRGBA(0.05, 0.04, 0.03, 0.97);
-        RoundedRect(ctx, 0, 0, W, H, 4); ctx.Fill();
+        ctx.SetSourceRGBA(bgr, bgg, bgb, 0.97);
+        RoundedRect(ctx, 0, 0, W, H, 6); ctx.Fill();
 
-        ctx.SetSourceRGBA(0.42, 0.34, 0.22, 0.6);
+        // Outer border — theme accent color
+        ctx.SetSourceRGBA(ar, ag, ab, 0.70);
+        ctx.LineWidth = 1.5;
+        RoundedRect(ctx, 0.75, 0.75, W - 1.5, H - 1.5, 6); ctx.Stroke();
+
+        // Inner bright line just inside border
+        ctx.SetSourceRGBA(ar, ag, ab, 0.18);
         ctx.LineWidth = 1;
-        RoundedRect(ctx, 0.5, 0.5, W - 1, H - 1, 4); ctx.Stroke();
+        RoundedRect(ctx, 3, 3, W - 6, H - 6, 5); ctx.Stroke();
 
-        // Subtle inner parchment area
-        ctx.SetSourceRGBA(0.12, 0.10, 0.07, 0.5);
-        RoundedRect(ctx, PadX - 12, PadY - 10, W - (PadX - 12) * 2, H - (PadY - 10) * 2, 2); ctx.Fill();
+        // ── Header strip ──────────────────────────────────────────────────────
+        const double HeaderH = 52;
+        // Gradient-like header: two filled rects
+        ctx.SetSourceRGBA(ar, ag, ab, 0.22);
+        RoundedRect(ctx, 0, 0, W, HeaderH, 6); ctx.Fill();
+        ctx.SetSourceRGBA(ar, ag, ab, 0.08);
+        ctx.Rectangle(0, HeaderH - 8, W, 8); ctx.Fill();
 
-        // Theme illustration — top-right corner, drawn before clip so it isn't masked
-        var (tr, tg, tb) = LoreTheme.GetAccent(_entry.Theme);
-        double illSize = 52;
-        LoreTheme.DrawIllustration(ctx, _entry.Theme, W - PadX - illSize * 0.42, PadY + illSize * 0.42, illSize, 0.58);
+        // Header bottom edge line
+        ctx.SetSourceRGBA(ar, ag, ab, 0.55);
+        ctx.LineWidth = 1;
+        ctx.MoveTo(0, HeaderH); ctx.LineTo(W, HeaderH); ctx.Stroke();
+
+        // Group label in header (left side)
+        ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Bold);
+        ctx.SetFontSize(9);
+        ctx.SetSourceRGBA(ar, ag, ab, 0.90);
+        ctx.MoveTo(PadX - 4, HeaderH * 0.58);
+        ctx.ShowText(groupLabel);
+
+        // Illustration in header (right side) — visible, not a watermark
+        double illH = 38;
+        LoreTheme.DrawIllustration(ctx, _entry.Theme, W - PadX - illH * 0.45, HeaderH * 0.50, illH, 0.85);
+
+        // ── Body parchment area ───────────────────────────────────────────────
+        double bodyTop = HeaderH + 4;
+        ctx.SetSourceRGBA(pr, pg, pb, 0.42);
+        RoundedRect(ctx, PadX - 12, bodyTop, W - (PadX - 12) * 2, H - bodyTop - 8, 3); ctx.Fill();
+
+        // Large centered watermark illustration
+        double wmSize = Math.Min(W, H - HeaderH) * 0.46;
+        LoreTheme.DrawIllustration(ctx, _entry.Theme, W * 0.5, bodyTop + (H - bodyTop) * 0.48, wmSize, 0.09);
 
         // ── Clip region for scrollable text ───────────────────────────────────
-        double clipY = PadY - 10;
-        double clipH = H - clipY * 2;
+        double clipY = bodyTop;
+        double clipH = H - clipY - 24;
         ctx.Rectangle(PadX - 12, clipY, W - (PadX - 12) * 2, clipH);
         ctx.Clip();
 
         double cx = PadX;
-        double cy = PadY - _scrollOffset;
+        double cy = bodyTop + 14 - _scrollOffset;
 
-        // Theme accent bar
-        ctx.SetSourceRGBA(tr, tg, tb, 0.55);
-        ctx.Rectangle(cx - 14, cy, 2, 56); ctx.Fill();
+        // Left accent bar — thick, theme colored
+        ctx.SetSourceRGBA(ar, ag, ab, 0.70);
+        ctx.Rectangle(cx - 16, cy, 3.5, TitleSize + AuthorSize + 22); ctx.Fill();
 
         // Title
         ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
-        ctx.SetFontSize(TitleSize);
-        ctx.SetSourceRGBA(0.92, 0.86, 0.72, 0.95);
+        ctx.SetFontSize(TitleSize + 1);
+        ctx.SetSourceRGBA(tr, tg, tb, 0.98);
         ctx.MoveTo(cx, cy + TitleSize + 2);
         ctx.ShowText(_entry.Title);
         cy += TitleSize + 8;
@@ -87,24 +123,22 @@ public class GuiDialogReadScroll : GuiDialog
         // Author
         ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
         ctx.SetFontSize(AuthorSize);
-        ctx.SetSourceRGBA(0.62, 0.54, 0.40, 0.75);
+        ctx.SetSourceRGBA(ar, ag, ab, 0.80);
         ctx.MoveTo(cx, cy + AuthorSize);
         if (!string.IsNullOrEmpty(_entry.Author))
-        {
             ctx.ShowText("— " + _entry.Author);
-        }
-        cy += AuthorSize + 12;
+        cy += AuthorSize + 10;
 
-        // Divider
-        ctx.SetSourceRGBA(0.42, 0.34, 0.22, 0.4);
-        ctx.LineWidth = 0.7;
+        // Divider — theme colored
+        ctx.SetSourceRGBA(ar, ag, ab, 0.50);
+        ctx.LineWidth = 0.8;
         ctx.MoveTo(cx, cy); ctx.LineTo(W - cx, cy); ctx.Stroke();
-        cy += 12;
+        cy += 14;
 
         // Body text
         ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Normal);
         ctx.SetFontSize(BodySize);
-        ctx.SetSourceRGBA(0.82, 0.76, 0.62, 0.88);
+        ctx.SetSourceRGBA(0.88, 0.84, 0.74, 0.90);
 
         double textW = W - cx * 2;
         cy = DrawWrappedText(ctx, string.Join("\n\n", _entry.Body), cx, cy, textW, LineH);
@@ -118,22 +152,22 @@ public class GuiDialogReadScroll : GuiDialog
         // ── Scroll indicator ──────────────────────────────────────────────────
         if (_maxScroll > 0)
         {
-            double trackH = H - PadY * 2;
-            double thumbH = Math.Max(24, trackH * (H / _contentHeight));
-            double thumbY = PadY + (_scrollOffset / _maxScroll) * (trackH - thumbH);
-            ctx.SetSourceRGBA(0.42, 0.34, 0.22, 0.25);
-            ctx.Rectangle(W - 10, PadY, 4, trackH); ctx.Fill();
-            ctx.SetSourceRGBA(0.72, 0.60, 0.40, 0.5);
+            double trackH = H - bodyTop - 28;
+            double thumbH = Math.Max(24, trackH * ((H - bodyTop) / _contentHeight));
+            double thumbY = bodyTop + 4 + (_scrollOffset / _maxScroll) * (trackH - thumbH);
+            ctx.SetSourceRGBA(ar, ag, ab, 0.15);
+            ctx.Rectangle(W - 10, bodyTop + 4, 4, trackH); ctx.Fill();
+            ctx.SetSourceRGBA(ar, ag, ab, 0.55);
             ctx.Rectangle(W - 10, thumbY, 4, thumbH); ctx.Fill();
         }
 
         // ── Footer hint ───────────────────────────────────────────────────────
         ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
         ctx.SetFontSize(9.5);
-        ctx.SetSourceRGBA(0.42, 0.38, 0.30, 0.5);
-        string hint = _maxScroll > 0 ? "Scroll to read more   ·   [Esc] to close" : "[Esc] to close";
+        ctx.SetSourceRGBA(ar, ag, ab, 0.45);
+        string hint = _maxScroll > 0 ? "Scroll to read more   ·   [Esc] or right-click to close" : "[Esc] or right-click to close";
         var te = ctx.TextExtents(hint);
-        ctx.MoveTo(W / 2 - te.Width / 2, H - 8);
+        ctx.MoveTo(W / 2 - te.Width / 2, H - 7);
         ctx.ShowText(hint);
     }
 

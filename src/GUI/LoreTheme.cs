@@ -17,6 +17,58 @@ public static class LoreTheme
         _              => (0.55, 0.42, 0.22),
     };
 
+    // Dark background tint per theme — replaces the neutral near-black
+    public static (double r, double g, double b) GetBackground(string? theme) => theme switch
+    {
+        "ashveil"      => (0.09, 0.02, 0.02),
+        "fieldmanual"  => (0.07, 0.06, 0.03),
+        "aldenmoor"    => (0.02, 0.05, 0.10),
+        "voss"         => (0.03, 0.05, 0.08),
+        "journal"      => (0.08, 0.06, 0.03),
+        "journal_fire" => (0.11, 0.03, 0.01),
+        "journal_air"  => (0.02, 0.07, 0.10),
+        _              => (0.05, 0.04, 0.03),
+    };
+
+    // Inner parchment / body area tint
+    public static (double r, double g, double b) GetParchment(string? theme) => theme switch
+    {
+        "ashveil"      => (0.18, 0.06, 0.05),
+        "fieldmanual"  => (0.14, 0.12, 0.07),
+        "aldenmoor"    => (0.06, 0.10, 0.18),
+        "voss"         => (0.07, 0.10, 0.15),
+        "journal"      => (0.16, 0.12, 0.06),
+        "journal_fire" => (0.20, 0.08, 0.02),
+        "journal_air"  => (0.05, 0.12, 0.18),
+        _              => (0.12, 0.10, 0.07),
+    };
+
+    // Title text color — prominent, on-brand
+    public static (double r, double g, double b) GetTitleColor(string? theme) => theme switch
+    {
+        "ashveil"      => (0.95, 0.55, 0.42),
+        "fieldmanual"  => (0.85, 0.78, 0.52),
+        "aldenmoor"    => (0.68, 0.88, 1.00),
+        "voss"         => (0.72, 0.90, 1.00),
+        "journal"      => (0.98, 0.88, 0.58),
+        "journal_fire" => (1.00, 0.72, 0.22),
+        "journal_air"  => (0.72, 0.94, 1.00),
+        _              => (0.92, 0.86, 0.72),
+    };
+
+    // Group / faction label shown in the header strip
+    public static string GetGroupLabel(string? theme) => theme switch
+    {
+        "ashveil"      => "ASHVEIL BROTHERHOOD",
+        "fieldmanual"  => "FIELD MANUAL",
+        "aldenmoor"    => "R. ALDENMOOR",
+        "voss"         => "E. VOSS",
+        "journal"      => "PERSONAL JOURNAL",
+        "journal_fire" => "PERSONAL JOURNAL · FIRE",
+        "journal_air"  => "PERSONAL JOURNAL · AIR",
+        _              => "",
+    };
+
     public static void DrawIllustration(Context ctx, string? theme, double cx, double cy, double size, double alpha)
     {
         switch (theme)

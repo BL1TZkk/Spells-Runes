@@ -1707,10 +1707,10 @@ public class GuiDialogSpellbook : GuiDialog
 
             // Theme accent header strip on right panel
             ctx.SetSourceRGBA(tacr, tacg, tacb, 0.16);
-            RRect(ctx, rightX, topY, rightW, 32, 6); ctx.Fill();
-            ctx.SetSourceRGBA(tacr, tacg, tacb, 0.30);
+            RRect(ctx, rightX, topY, rightW, 28, 6); ctx.Fill();
+            ctx.SetSourceRGBA(tacr, tacg, tacb, 0.28);
             ctx.LineWidth = 0.8;
-            ctx.MoveTo(rightX, topY + 32); ctx.LineTo(rightX + rightW, topY + 32); ctx.Stroke();
+            ctx.MoveTo(rightX, topY + 28); ctx.LineTo(rightX + rightW, topY + 28); ctx.Stroke();
 
             // Watermark illustration — center-right of panel
             double illS = Math.Min(rightW, paneH) * 0.40;
@@ -1729,54 +1729,63 @@ public class GuiDialogSpellbook : GuiDialog
         int sibIdx = siblings.FindIndex(e => e.Id == selected.Id);
         int sibCount = siblings.Count;
 
-        // Group label + position row
-        double navRowY = topY + 10;
-        ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
-        ctx.SetFontSize(9.5); C(ctx, ClrSub, 0.7);
+        // Group label — inside the header strip
+        ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Bold);
+        ctx.SetFontSize(9.5);
+        if (!string.IsNullOrEmpty(selected.Theme))
+        {
+            var (tlr, tlg, tlb) = LoreTheme.GetAccent(selected.Theme);
+            ctx.SetSourceRGBA(tlr, tlg, tlb, 0.88);
+        }
+        else C(ctx, ClrSub, 0.75);
         if (!string.IsNullOrEmpty(selected.Group))
-            TextAt(ctx, selected.Group.ToUpper(), contentX, navRowY + 10);
+            TextAt(ctx, selected.Group.ToUpper(), contentX, topY + 20);
 
+        // Nav buttons — own row below the header strip
+        double navBtnY = topY + 36;
         if (sibCount > 1)
         {
-            double btnW = 26, btnH = 22;
-            double navRightX = rightX + rightW - 16;
+            double btnW = 28, btnH = 22;
+            double navRightX = rightX + rightW - 14;
             string posLabel = $"{sibIdx + 1} / {sibCount}";
             ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
             ctx.SetFontSize(11);
             var (posW, _) = TSize(ctx, posLabel);
 
-            double btnMidY = navRowY + btnH / 2;
+            double btnMidY = navBtnY + btnH / 2;
 
             // Next button
             double nextX = navRightX - btnW;
-            _loreNextR = (nextX, navRowY, btnW, btnH);
+            _loreNextR = (nextX, navBtnY, btnW, btnH);
             _hasNext = sibIdx < sibCount - 1;
             C(ctx, _hasNext ? ClrActive : ClrBgAlt, _hasNext ? 0.45 : 0.20);
-            RRect(ctx, nextX, navRowY, btnW, btnH, 4); ctx.Fill();
-            C(ctx, _hasNext ? ClrGold : ClrDim, _hasNext ? 0.55 : 0.20);
-            RRect(ctx, nextX, navRowY, btnW, btnH, 4); ctx.Stroke();
-            C(ctx, _hasNext ? ClrGold : ClrDim, _hasNext ? 0.90 : 0.30);
+            RRect(ctx, nextX, navBtnY, btnW, btnH, 4); ctx.Fill();
+            C(ctx, _hasNext ? ClrGold : ClrDim, _hasNext ? 0.60 : 0.20);
+            ctx.LineWidth = 1;
+            RRect(ctx, nextX, navBtnY, btnW, btnH, 4); ctx.Stroke();
+            C(ctx, _hasNext ? ClrGold : ClrDim, _hasNext ? 0.92 : 0.30);
             DrawArrow(ctx, nextX + btnW / 2, btnMidY, 5, true);
 
-            // Position label — vertically centered with buttons
-            double posX = nextX - posW - 10;
+            // Position label
+            double posX = nextX - posW - 12;
             C(ctx, ClrText, 0.80);
             TextAt(ctx, posLabel, posX, btnMidY + 4);
 
             // Prev button
-            double prevX = posX - btnW - 8;
-            _lorePrevR = (prevX, navRowY, btnW, btnH);
+            double prevX = posX - btnW - 10;
+            _lorePrevR = (prevX, navBtnY, btnW, btnH);
             _hasPrev = sibIdx > 0;
             C(ctx, _hasPrev ? ClrActive : ClrBgAlt, _hasPrev ? 0.45 : 0.20);
-            RRect(ctx, prevX, navRowY, btnW, btnH, 4); ctx.Fill();
-            C(ctx, _hasPrev ? ClrGold : ClrDim, _hasPrev ? 0.55 : 0.20);
-            RRect(ctx, prevX, navRowY, btnW, btnH, 4); ctx.Stroke();
-            C(ctx, _hasPrev ? ClrGold : ClrDim, _hasPrev ? 0.90 : 0.30);
+            RRect(ctx, prevX, navBtnY, btnW, btnH, 4); ctx.Fill();
+            C(ctx, _hasPrev ? ClrGold : ClrDim, _hasPrev ? 0.60 : 0.20);
+            ctx.LineWidth = 1;
+            RRect(ctx, prevX, navBtnY, btnW, btnH, 4); ctx.Stroke();
+            C(ctx, _hasPrev ? ClrGold : ClrDim, _hasPrev ? 0.92 : 0.30);
             DrawArrow(ctx, prevX + btnW / 2, btnMidY, 5, false);
         }
 
-        // Title
-        double titleY = topY + 38;
+        // Title — below nav row
+        double titleY = topY + 66;
         ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
         ctx.SetFontSize(15);
         if (!string.IsNullOrEmpty(selected.Theme))

@@ -71,6 +71,7 @@ public static class LoreTheme
 
     public static void DrawIllustration(Context ctx, string? theme, double cx, double cy, double size, double alpha)
     {
+        ctx.NewPath(); // prevent stray line from Cairo's current point (e.g. after ShowText)
         switch (theme)
         {
             case "ashveil":      DrawAshveil(ctx, cx, cy, size, alpha);     break;

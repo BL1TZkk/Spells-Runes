@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -124,8 +125,12 @@ public class SpellsAndRunesMod : ModSystem
             .RegisterMessageType<MsgReadScroll>()
             .SetMessageHandler<MsgReadScroll>((player, msg) =>
             {
-                if (!string.IsNullOrEmpty(msg.ScrollId))
-                    PlayerSpellData.For(player.Entity).UnlockLoreEntry(msg.ScrollId);
+                if (string.IsNullOrEmpty(msg.ScrollId)) return;
+                var data = PlayerSpellData.For(player.Entity);
+                bool isFirst = !data.GetUnlockedLoreEntryIds().Any();
+                data.UnlockLoreEntry(msg.ScrollId);
+                if (isFirst)
+                    data.UnlockLoreEntry("journal-general-1");
             })
             .SetMessageHandler<MsgUnlockSpell>((player, msg) =>
             {
@@ -1368,6 +1373,7 @@ public class SpellsAndRunesMod : ModSystem
 
             var data = PlayerSpellData.For(sp.Entity);
             data.TriggerActivator("element_fire");
+            data.UnlockLoreEntry("journal-fire-1");
 
             sp.Entity.WatchedAttributes.SetBool("snr:firepower", true);
             sp.Entity.WatchedAttributes.MarkPathDirty("snr:firepower");

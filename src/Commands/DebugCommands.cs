@@ -4,6 +4,7 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.Server;
 using Vintagestory.API.MathTools;
 using SpellsAndRunes.Flux;
+using SpellsAndRunes.Lore;
 using SpellsAndRunes.Spells;
 
 namespace SpellsAndRunes.Commands;
@@ -111,6 +112,21 @@ public static class DebugCommands
                     api.ChatCommands.Parsers.OptionalWord("radius"),
                     api.ChatCommands.Parsers.OptionalWord("max"))
                 .HandleWith(OnFindSylphweed)
+            .EndSubCommand()
+
+            // /snr clearelement <element>
+            .BeginSubCommand("clearelement")
+                .WithDescription("Remove an unlocked element (e.g. /snr clearelement Fire)")
+                .RequiresPrivilege(Privilege.controlserver)
+                .WithArgs(api.ChatCommands.Parsers.Word("element"))
+                .HandleWith(OnClearElement)
+            .EndSubCommand()
+
+            // /snr clearlore
+            .BeginSubCommand("clearlore")
+                .WithDescription("Clear all unlocked lore/journal entries for yourself")
+                .RequiresPrivilege(Privilege.controlserver)
+                .HandleWith(OnClearLore)
             .EndSubCommand();
     }
 
@@ -208,6 +224,7 @@ public static class DebugCommands
             return TextCommandResult.Success("Flux already unlocked.");
 
         data.UnlockFlux();
+        data.UnlockLoreEntry("journal-air-1");
         return TextCommandResult.Success("Flux unlocked.");
     }
 
@@ -221,7 +238,11 @@ public static class DebugCommands
             return TextCommandResult.Error($"Unknown element '{elementStr}'. Valid: {string.Join(", ", Enum.GetNames<SpellElement>())}");
 
         var data = PlayerSpellData.For(entity);
+        if (!data.IsFluxUnlocked) data.UnlockFlux();
         data.TriggerActivator($"element_{element.ToString().ToLowerInvariant()}");
+        var journalId = $"journal-{element.ToString().ToLowerInvariant()}-1";
+        if (SpellbookLoreRegistry.Get(journalId) != null)
+            data.UnlockLoreEntry(journalId);
         return TextCommandResult.Success($"Element '{element}' unlocked.");
     }
 
@@ -319,6 +340,28 @@ public static class DebugCommands
         }
 
         return TextCommandResult.Success(sb.ToString());
+    }
+
+    private static TextCommandResult OnClearElement(TextCommandCallingArgs args)
+    {
+        if (args.Caller.Entity is not { } entity)
+            return TextCommandResult.Error("No player entity found.");
+
+        string raw = ((string)args[0]).ToLowerInvariant();
+        var data = PlayerSpellData.For(entity);
+        data.RemoveActivator($"element_{raw}");
+        if (raw == "air")
+            data.RemoveActivator("sylphweed");
+        return TextCommandResult.Success($"Element '{raw}' removed.");
+    }
+
+    private static TextCommandResult OnClearLore(TextCommandCallingArgs args)
+    {
+        if (args.Caller.Entity is not { } entity)
+            return TextCommandResult.Error("No player entity found.");
+
+        PlayerSpellData.For(entity).ClearLoreEntries();
+        return TextCommandResult.Success("All lore/journal entries cleared.");
     }
 
     private static int TryParsePositiveInt(string? raw, int fallback)

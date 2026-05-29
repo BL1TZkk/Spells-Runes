@@ -115,9 +115,9 @@ public class GuiDialogSpellbook : GuiDialog
 
     public override void OnGuiOpened()
     {
-        // Only recompose if frame dimensions changed since last compose
         int fw = capi.Render.FrameWidth, fh = capi.Render.FrameHeight;
         if (fw != _lastComposeFrameW || fh != _lastComposeFrameH) ComposeDialog();
+        else Redraw();
         base.OnGuiOpened();
     }
     public void ReloadData()            { if (IsOpened()) Redraw(); }

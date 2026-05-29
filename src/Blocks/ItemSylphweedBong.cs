@@ -66,6 +66,7 @@ public class ItemSylphweedBong : Item
 
         // Unlock flux
         data.UnlockFlux();
+        data.UnlockLoreEntry("journal-air-1");
         player.SendMessage(0, Lang.Get("spellsandrunes:message-flux-awakens"), EnumChatType.Notification);
 
     }

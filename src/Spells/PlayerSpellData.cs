@@ -160,6 +160,12 @@ public class PlayerSpellData
         entity.WatchedAttributes.MarkPathDirty(AttrLoreUnlocked);
     }
 
+    public void ClearLoreEntries()
+    {
+        entity.WatchedAttributes.RemoveAttribute(AttrLoreUnlocked);
+        entity.WatchedAttributes.MarkPathDirty(AttrLoreUnlocked);
+    }
+
     public IEnumerable<string> GetUnlockedLoreEntryIds()
     {
         var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -180,6 +186,12 @@ public class PlayerSpellData
 
     public bool HasActivator(string activatorId)
         => GetTree(AttrActivators).HasAttribute(activatorId);
+
+    public void RemoveActivator(string activatorId)
+    {
+        GetTree(AttrActivators).RemoveAttribute(activatorId);
+        MarkAllSpellDataDirty();
+    }
 
     public void TriggerActivator(string activatorId)
     {

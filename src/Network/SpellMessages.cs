@@ -30,7 +30,7 @@ public class MsgChannelSpell
     [ProtoMember(3)] public int SpellLevel { get; set; } = 1;
 }
 
-/// <summary>Server → casting client: notify cast start (for HUD cast bar).</summary>
+/// <summary>Server -> casting client: notify cast start (for HUD cast bar).</summary>
 [ProtoContract]
 public class MsgStartCast
 {
@@ -38,14 +38,22 @@ public class MsgStartCast
     [ProtoMember(2)] public float CastTime { get; set; } = 1f;
 }
 
-/// <summary>Server → casting client only: kill your momentum immediately.</summary>
+/// <summary>Server -> casting client only: kill your momentum immediately.</summary>
 [ProtoContract]
 public class MsgFreezeMotion
 {
     [ProtoMember(1)] public float NudgeY { get; set; } = 0.06f;
 }
 
-/// <summary>Server → casting client only: launch with upward burst then forward dash.</summary>
+/// <summary>Server -> casting client only: lock player movement during cast windup.</summary>
+[ProtoContract]
+public class MsgMovementLock
+{
+    [ProtoMember(1)] public int DurationMs { get; set; }
+    [ProtoMember(2)] public bool LockVertical { get; set; }
+}
+
+/// <summary>Server -> casting client only: launch with upward burst then forward dash.</summary>
 [ProtoContract]
 public class MsgLaunchPlayer
 {
@@ -57,17 +65,25 @@ public class MsgLaunchPlayer
     [ProtoMember(6)] public bool  UseLookY     { get; set; }
 }
 
-/// <summary>Server → all nearby clients: play a spell animation on an entity.</summary>
+/// <summary>Server -> casting client only: apply a temporary walk speed multiplier.</summary>
+[ProtoContract]
+public class MsgMovementBoost
+{
+    [ProtoMember(1)] public string StatId { get; set; } = "";
+    [ProtoMember(2)] public float Multiplier { get; set; } = 1f;
+    [ProtoMember(3)] public int DurationMs { get; set; }
+}
+
 [ProtoContract]
 public class MsgPlayAnimation
 {
     [ProtoMember(1)] public long   EntityId      { get; set; }
     [ProtoMember(2)] public string AnimationCode { get; set; } = "";
-    [ProtoMember(3)] public bool   UpperBodyOnly { get; set; } = true;
+    [ProtoMember(3)] public bool   TakesOverBody { get; set; }
     [ProtoMember(4)] public float  AnimationSpeed { get; set; } = 1f;
 }
 
-/// <summary>Server → all nearby clients: a spell visual effect fired at this position/direction.</summary>
+/// <summary>Server -> all nearby clients: a spell visual effect fired at this position/direction.</summary>
 [ProtoContract]
 public class MsgSpellFx
 {

@@ -19,7 +19,7 @@ public class WindStep : Spell
     public override float FluxCost => 35f;
     public override float CastTime => 0.5f;
     public override string? AnimationCode => "air_wind_step";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => true;
 
     public override IReadOnlyList<string> Prerequisites => ["air_windy_dash", "air_wind_slash"];
 
@@ -32,13 +32,13 @@ public class WindStep : Spell
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
-        var lookDir = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
-        var origin = caster.SidedPos.XYZ.Add(0, caster.LocalEyePos.Y - 0.15, 0);
+        var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
+        var origin = caster.Pos.XYZ.Add(0, caster.LocalEyePos.Y - 0.15, 0);
 
         WindSlash.HitAlongLine(caster, world, origin, lookDir, Range * GetRangeMultiplier(spellLevel), HitRadius, Damage * GetDamageMultiplier(spellLevel));
-        caster.SidedPos.Motion.Set(
+        caster.Pos.Motion.Set(
             lookDir.X * ForwardForce * GetRangeMultiplier(spellLevel),
-            Math.Max(caster.SidedPos.Motion.Y, 0.05),
+            Math.Max(caster.Pos.Motion.Y, 0.05),
             lookDir.Z * ForwardForce * GetRangeMultiplier(spellLevel));
 
 

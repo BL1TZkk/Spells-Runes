@@ -25,7 +25,8 @@ public class SparkGlowRenderer : IRenderer
 
     private class SparkLight : IPointLight
     {
-        public Vec3f Color { get; set; } = new Vec3f(0.05f, 0.4f, 1f); // BGR: b=0.05,g=0.4,r=1 → orange
+        // Magnitude controls dynamic light range in Vintage Story.
+        public Vec3f Color { get; set; } = new Vec3f(8.0f, 3.2f, 0.7f);
         public Vec3d Pos   { get; set; } = new Vec3d();
     }
 

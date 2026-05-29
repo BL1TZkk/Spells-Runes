@@ -14,13 +14,19 @@ public class EntityBehaviorFlux : EntityBehavior
     private const string AttrFluxAlignmentLevel = "spellsandrunes:fluxalignmentlevel";
     private const string AttrActivators = "snr:activators";
     public const string FluxAlignmentLevel2Activator = "fluxalignment_2";
+    public const string FluxAlignmentLevel3Activator = "fluxalignment_3";
+    public const string FluxAlignmentLevel4Activator = "fluxalignment_4";
 
     private const int DefaultAlignmentLevel = 1;
-    private const int MaxAlignmentLevel = 2;
+    private const int MaxAlignmentLevel = 4;
     private const float Level1MaxFlux = 100f;
     private const float Level2MaxFlux = 150f;
+    private const float Level3MaxFlux = 200f;
+    private const float Level4MaxFlux = 250f;
     private const float Level1RegenPerSecond = 5f;
     private const float Level2RegenPerSecond = 6f;
+    private const float Level3RegenPerSecond = 7f;
+    private const float Level4RegenPerSecond = 8f;
 
     public EntityBehaviorFlux(Entity entity) : base(entity) { }
 
@@ -54,7 +60,9 @@ public class EntityBehaviorFlux : EntityBehavior
 
         float flux = entity.WatchedAttributes.GetFloat(AttrFlux, 0f);
         float max  = entity.WatchedAttributes.GetFloat(AttrMaxFlux, GetMaxFluxForLevel(GetFluxAlignmentLevel()));
+#if DEBUG
         entity.Api.Logger.Notification($"[SnR] Player loaded, flux={flux}/{max}, alignment={GetFluxAlignmentLevel()}");
+#endif
 
         entity.WatchedAttributes.MarkPathDirty(AttrMaxFlux);
         entity.WatchedAttributes.MarkPathDirty(AttrFlux);
@@ -90,7 +98,9 @@ public class EntityBehaviorFlux : EntityBehavior
         float next = Math.Min(current + regen * elapsed, max);
         entity.WatchedAttributes.SetFloat(AttrFlux, next);
         entity.WatchedAttributes.MarkPathDirty(AttrFlux);
+#if DEBUG
         entity.Api.Logger.Notification($"[SnR] Flux regen: {current:F1} -> {next:F1}/{max}");
+#endif
     }
 
     public int GetFluxAlignmentLevel()
@@ -108,6 +118,8 @@ public class EntityBehaviorFlux : EntityBehavior
     public float GetMaxFluxForLevel(int level)
         => Math.Clamp(level, 1, MaxAlignmentLevel) switch
         {
+            4 => Level4MaxFlux,
+            3 => Level3MaxFlux,
             2 => Level2MaxFlux,
             _ => Level1MaxFlux,
         };
@@ -115,6 +127,8 @@ public class EntityBehaviorFlux : EntityBehavior
     public float GetRegenForLevel(int level)
         => Math.Clamp(level, 1, MaxAlignmentLevel) switch
         {
+            4 => Level4RegenPerSecond,
+            3 => Level3RegenPerSecond,
             2 => Level2RegenPerSecond,
             _ => Level1RegenPerSecond,
         };
@@ -132,9 +146,14 @@ public class EntityBehaviorFlux : EntityBehavior
     {
         if (GetFluxAlignmentLevel() >= MaxAlignmentLevel) return false;
         if (entity.WatchedAttributes.GetTreeAttribute(AttrActivators) is not TreeAttribute activators) return false;
-        if (!activators.HasAttribute(FluxAlignmentLevel2Activator)) return false;
 
-        SetFluxAlignmentLevel(2);
+        int promotedLevel = GetFluxAlignmentLevel();
+        if (activators.HasAttribute(FluxAlignmentLevel4Activator)) promotedLevel = 4;
+        else if (activators.HasAttribute(FluxAlignmentLevel3Activator)) promotedLevel = 3;
+        else if (activators.HasAttribute(FluxAlignmentLevel2Activator)) promotedLevel = 2;
+
+        if (promotedLevel <= GetFluxAlignmentLevel()) return false;
+        SetFluxAlignmentLevel(promotedLevel);
         return true;
     }
 

@@ -1,0 +1,24 @@
+{
+	"textureWidth": 32,
+	"textureHeight": 32,
+	"textures": {
+		"t": "spellsandrunes:block/ignis-fragment"
+	},
+	"elements": [
+		{
+			"name": "mine",
+			"from": [6, -1, 6],
+			"to": [10, 1, 10],
+			"rotationOrigin": [8, 0, 8],
+			"glow": 255,
+			"faces": {
+				"north": { "texture": "#t", "uv": [10, 13, 18, 16], "glow": 255 },
+				"east": { "texture": "#t", "uv": [10, 13, 18, 16], "glow": 255 },
+				"south": { "texture": "#t", "uv": [10, 13, 18, 16], "glow": 255 },
+				"west": { "texture": "#t", "uv": [10, 13, 18, 16], "glow": 255 },
+				"up": { "texture": "#t", "uv": [10, 6, 18, 14], "glow": 255 },
+				"down": { "texture": "#t", "uv": [10, 6, 18, 14], "glow": 255 }
+			}
+		}
+	]
+}

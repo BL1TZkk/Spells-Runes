@@ -80,10 +80,10 @@ public abstract class Spell
     public virtual string? AnimationCode => null;
 
     /// <summary>
-    /// If true, animation is masked to upper body only (torse, arms, head) —
-    /// legs continue playing locomotion animation normally.
+    /// If true, the animation suppresses default movement/fall animations and takes over the full body.
+    /// If false, the animation overrides the upper body while default movement keeps controlling the lower body.
     /// </summary>
-    public virtual bool AnimationUpperBodyOnly => true;
+    public virtual bool AnimationTakesOverBody => false;
 
     /// <summary>Playback speed multiplier for the animation. Default 1.0.</summary>
     public virtual float AnimationSpeed => 1f;
@@ -103,9 +103,9 @@ public abstract class Spell
     protected Vec3d GetOrigin(EntityAgent caster)
     {
         var cfg   = Origin;
-        var look  = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
+        var look  = caster.Pos.GetViewVector().ToVec3d().Normalize();
         var right = look.Cross(new Vec3d(0, 1, 0)).Normalize();
-        return caster.SidedPos.XYZ
+        return caster.Pos.XYZ
             .Add(0, caster.LocalEyePos.Y + cfg.Up, 0)
             .Add(look  * cfg.Forward)
             .Add(right * cfg.Side);

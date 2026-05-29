@@ -3,6 +3,7 @@ using System;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace SpellsAndRunes.Spells.Air;
 
@@ -20,7 +21,7 @@ public class WindSlash : Spell
     public override float CastTime => 0.8f;
 
     public override string? AnimationCode        => "air_wind_slash";
-    public override bool    AnimationUpperBodyOnly => false;
+    public override bool    AnimationTakesOverBody => true;
 
     public override IReadOnlyList<string> Prerequisites => ["air_air_push"];
 
@@ -34,11 +35,12 @@ public class WindSlash : Spell
     private static readonly Dictionary<long, HashSet<long>> ActiveDamageSweeps = new();
     private const float SweepSpeed = 20f;
     private const float MinTravelDistance = 0.6f;
+    private const float LeafCutRadius = 0.9f;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
-        var lookDir = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
-        var origin = caster.SidedPos.XYZ.Add(0, caster.LocalEyePos.Y - 0.1, 0);
+        var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
+        var origin = caster.Pos.XYZ.Add(0, caster.LocalEyePos.Y - 0.1, 0);
         float range = Range * GetRangeMultiplier(spellLevel);
         float damage = Damage * GetDamageMultiplier(spellLevel);
 
@@ -61,7 +63,7 @@ public class WindSlash : Spell
         {
             if (e.EntityId == caster.EntityId || e is not EntityAgent) return false;
 
-            Vec3d target = e.SidedPos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
+            Vec3d target = e.Pos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
             Vec3d toTarget = target - origin;
             double along = toTarget.Dot(lookDir);
             if (along < 0 || along > range) return false;
@@ -77,7 +79,7 @@ public class WindSlash : Spell
                 Type = EnumDamageType.SlashingAttack,
             }, damage);
 
-            e.SidedPos.Motion.Add(lookDir.X * 0.08, 0.02, lookDir.Z * 0.08);
+            e.Pos.Motion.Add(lookDir.X * 0.08, 0.02, lookDir.Z * 0.08);
             return false;
         });
     }
@@ -112,6 +114,8 @@ public class WindSlash : Spell
             Vec3d prevPos = origin + lookDir * prevDist;
             Vec3d pos = origin + lookDir * dist;
 
+            CutLeavesAlongSegment(caster, world, prevPos, pos);
+
             if (TryHitAlongSegment(caster, world, prevPos, pos, hitRadius, out EntityAgent? hitEntity, out Vec3d hitPos))
             {
                 if (hitEntity != null)
@@ -122,7 +126,7 @@ public class WindSlash : Spell
                         SourceEntity = caster,
                         Type = EnumDamageType.SlashingAttack,
                     }, damage);
-                    hitEntity.SidedPos.Motion.Add(lookDir.X * 0.08, 0.02, lookDir.Z * 0.08);
+                    hitEntity.Pos.Motion.Add(lookDir.X * 0.08, 0.02, lookDir.Z * 0.08);
                 }
                 SpawnPoof(world, hitPos);
                 world.Api.Event.UnregisterGameTickListener(listenerId);
@@ -143,6 +147,92 @@ public class WindSlash : Spell
             ActiveDamageSweeps[caster.EntityId] = set;
         }
         set.Add(listenerId);
+    }
+
+    private static void CutLeavesAlongSegment(EntityAgent caster, IWorldAccessor world, Vec3d from, Vec3d to)
+    {
+        IPlayer? player = caster is EntityPlayer entityPlayer
+            ? world.PlayerByUid(entityPlayer.PlayerUID)
+            : null;
+
+        var broken = new HashSet<Vec3i>();
+        Vec3d seg = to - from;
+        double segLenSq = seg.LengthSq();
+        if (segLenSq < 0.0001) return;
+
+        int minX = (int)Math.Floor(Math.Min(from.X, to.X) - LeafCutRadius);
+        int minY = (int)Math.Floor(Math.Min(from.Y, to.Y) - LeafCutRadius);
+        int minZ = (int)Math.Floor(Math.Min(from.Z, to.Z) - LeafCutRadius);
+        int maxX = (int)Math.Floor(Math.Max(from.X, to.X) + LeafCutRadius);
+        int maxY = (int)Math.Floor(Math.Max(from.Y, to.Y) + LeafCutRadius);
+        int maxZ = (int)Math.Floor(Math.Max(from.Z, to.Z) + LeafCutRadius);
+
+        for (int x = minX; x <= maxX; x++)
+        for (int y = minY; y <= maxY; y++)
+        for (int z = minZ; z <= maxZ; z++)
+        {
+            var pos = new BlockPos(x, y, z, 0);
+            var key = new Vec3i(pos.X, pos.Y, pos.Z);
+            if (broken.Contains(key)) continue;
+
+            Vec3d center = pos.ToVec3d().Add(0.5, 0.5, 0.5);
+            Vec3d toCenter = center - from;
+            double t = GameMath.Clamp(toCenter.Dot(seg) / segLenSq, 0, 1);
+            Vec3d closest = from + seg * t;
+            if (center.DistanceTo(closest) > LeafCutRadius) continue;
+
+            Block block = world.BlockAccessor.GetBlock(pos);
+            if (!IsLeafBlock(block)) continue;
+            if (player != null && !world.Claims.TryAccess(player, pos, EnumBlockAccessFlags.BuildOrBreak)) continue;
+
+            broken.Add(key);
+            BreakLeafWithDrops(world, pos, block, player);
+        }
+    }
+
+    private static bool IsLeafBlock(Block block)
+    {
+        string path = block.Code?.Path ?? "";
+        if (path.StartsWith("leaves-", StringComparison.Ordinal)) return true;
+        if (path.StartsWith("leavesbranchy-", StringComparison.Ordinal)) return true;
+        if (path.StartsWith("leavesbranchystatic-", StringComparison.Ordinal)) return true;
+        if (path.StartsWith("bambooleaves-", StringComparison.Ordinal)) return true;
+
+        if (block.BlockMaterial == EnumBlockMaterial.Leaves) return true;
+        return block is BlockLeaves || block is BlockLeavesNarrow || block is BlockWithLeavesMotion;
+    }
+
+    private static void BreakLeafWithDrops(IWorldAccessor world, BlockPos pos, Block block, IPlayer? player)
+    {
+        ItemStack[]? drops = null;
+        if (world.Side == EnumAppSide.Server && (player == null || player.WorldData.CurrentGameMode != EnumGameMode.Creative))
+        {
+            drops = block.GetDrops(world, pos, player, 1f);
+        }
+
+        block.OnBlockBroken(world, pos, player, 0f);
+        world.BlockAccessor.MarkBlockDirty(pos);
+
+        if (drops == null) return;
+
+        foreach (var drop in drops)
+        {
+            if (drop == null || drop.StackSize <= 0) continue;
+
+            if (block.SplitDropStacks)
+            {
+                for (int i = 0; i < drop.StackSize; i++)
+                {
+                    ItemStack single = drop.Clone();
+                    single.StackSize = 1;
+                    world.SpawnItemEntity(single, pos);
+                }
+            }
+            else
+            {
+                world.SpawnItemEntity(drop.Clone(), pos);
+            }
+        }
     }
 
     private static bool TryHitAlongSegment(EntityAgent caster, IWorldAccessor world, Vec3d from, Vec3d to, float hitRadius, out EntityAgent? hitEntity, out Vec3d hitPos)
@@ -168,7 +258,7 @@ public class WindSlash : Spell
         {
             if (e.EntityId == caster.EntityId || e is not EntityAgent agent) return false;
 
-            Vec3d target = e.SidedPos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
+            Vec3d target = e.Pos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
             Vec3d toTarget = target - from;
             double t = toTarget.Dot(seg) / segLenSq;
             if (t < 0 || t > 1) return false;

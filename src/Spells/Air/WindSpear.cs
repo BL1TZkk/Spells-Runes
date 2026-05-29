@@ -22,7 +22,7 @@ public class WindSpear : Spell
     public override float CastTime => 1.0f;
 
     public override string? AnimationCode        => "air_wind_spear";
-    public override bool    AnimationUpperBodyOnly => false;
+    public override bool    AnimationTakesOverBody => true;
 
     public override IReadOnlyList<string> Prerequisites => ["air_triple_wind_slash"];
 
@@ -36,7 +36,7 @@ public class WindSpear : Spell
     {
         if (world.Side != EnumAppSide.Server) return;
 
-        var look   = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
+        var look   = caster.Pos.GetViewVector().ToVec3d().Normalize();
         var origin = GetOrigin(caster);
         SpawnProjectile(caster, world, origin, look, spellLevel);
     }
@@ -48,13 +48,11 @@ public class WindSpear : Spell
         var spear = world.ClassRegistry.CreateEntity(entityType);
         if (spear == null) return null;
 
-        spear.ServerPos.SetPos(origin);
+        spear.Pos.SetPos(origin);
         Vec3d launchMotion = lookDir * ProjectileSpeed * (1f + 0.10f * (spellLevel - 1));
         SetOrientationFromDirection(spear, lookDir);
         Vec3d initialMotion = launchDelayMs > 0 ? new Vec3d() : launchMotion;
-        spear.ServerPos.Motion.Set(initialMotion);
         spear.Pos.Motion.Set(initialMotion);
-        spear.Pos.SetFrom(spear.ServerPos);
 
         if (spear is EntityProjectile proj)
         {
@@ -77,7 +75,7 @@ public class WindSpear : Spell
             {
                 if (!spear.Alive) return;
                 SetOrientationFromDirection(spear, lookDir);
-                spear.ServerPos.Motion.Set(launchMotion);
+                spear.Pos.Motion.Set(launchMotion);
                 spear.Pos.Motion.Set(launchMotion);
                 if (spear is EntityWindSpear delayedWindSpear)
                 {
@@ -94,8 +92,8 @@ public class WindSpear : Spell
         double yaw = Math.Atan2(lookDir.X, lookDir.Z);
         double horizontal = Math.Sqrt(lookDir.X * lookDir.X + lookDir.Z * lookDir.Z);
         double pitch = -Math.Atan2(lookDir.Y, horizontal);
-        spear.ServerPos.Yaw = (float)yaw;
-        spear.ServerPos.Pitch = (float)pitch;
+        spear.Pos.Yaw = (float)yaw;
+        spear.Pos.Pitch = (float)pitch;
         spear.Pos.Yaw = (float)yaw;
         spear.Pos.Pitch = (float)pitch;
     }

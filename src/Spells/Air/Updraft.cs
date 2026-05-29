@@ -20,7 +20,7 @@ public class Updraft : Spell
     public override float CastTime => 0.8f;
 
     public override string? AnimationCode        => "air_updraft";
-    public override bool    AnimationUpperBodyOnly => false;
+    public override bool    AnimationTakesOverBody => true;
 
     public override IReadOnlyList<string> Prerequisites => ["air_air_kick"];
 
@@ -31,13 +31,13 @@ public class Updraft : Spell
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
-        var lookDir = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
-        caster.SidedPos.Motion.Set(
+        var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
+        caster.Pos.Motion.Set(
             lookDir.X * ForwardForce * GetRangeMultiplier(spellLevel),
             UpForce,
             lookDir.Z * ForwardForce * GetRangeMultiplier(spellLevel));
 
-        SpawnFx(world, caster.SidedPos.XYZ.Add(0, 0.25, 0), lookDir, spellLevel);
+        SpawnFx(world, caster.Pos.XYZ.Add(0, 0.25, 0), lookDir, spellLevel);
     }
 
     public static void SpawnFx(IWorldAccessor world, Vec3d origin, Vec3d lookDir, int spellLevel = 1)

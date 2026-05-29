@@ -19,7 +19,7 @@ public class WindClone : Spell
     public override float FluxCost => 40f;
     public override float CastTime => 1.0f;
     public override string? AnimationCode => "air_wind_clone";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => true;
 
     public override IReadOnlyList<string> Prerequisites => ["air_windy_dash"];
 
@@ -27,7 +27,7 @@ public class WindClone : Spell
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
-        SpawnFx(world, caster.SidedPos.XYZ.Add(0, 0.7, 0), spellLevel);
+        SpawnFx(world, caster.Pos.XYZ.Add(0, 0.7, 0), spellLevel);
     }
 
     public static void SpawnFx(IWorldAccessor world, Vec3d origin, int spellLevel = 1)

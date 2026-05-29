@@ -19,15 +19,17 @@ public class FireDance : Spell
     public override SpellType Type => SpellType.Enchantment;
 
     public override float FluxCost => 36f;
-    public override float CastTime => 0f;
+    private const int FirstBeatFrame = 15;
+
+    public override float CastTime => FirstBeatFrame / 30f;
 
     public override string? AnimationCode => "fire_dance";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => true;
 
-    public override IReadOnlyList<string> Prerequisites => ["fire_orb", "fire_mine"];
-    public override (int col, int row) TreePosition => (1, 3);
+    public override IReadOnlyList<string> Prerequisites => ["fire_flamethrower"];
+    public override (int col, int row) TreePosition => (2, 5);
 
-    public const float StepDistance = 1.15f;
+    public const float StepDistance = 0.35f;
     public const float ConeRange = 4.5f;
     public const float ConeAngleDeg = 36f;
     public const float Damage = 5f;
@@ -45,11 +47,11 @@ public class FireDance : Spell
 
         foreach (var beat in beats)
         {
-            int delayMs = FrameToMs(beat.Frame);
+            int delayMs = FrameToMs(beat.Frame - FirstBeatFrame);
             world.Api.Event.RegisterCallback(_ =>
             {
                 if (!caster.Alive) return;
-                var lookDir = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
+                var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
                 DoStep(caster, world, lookDir, beat.Side, spellLevel);
                 if (beat.Side == 2)
                 {
@@ -68,13 +70,15 @@ public class FireDance : Spell
 
     private static int FrameToMs(int frame) => (int)Math.Round(frame / 30.0 * 1000.0);
 
+    public override float GetCastTimeMultiplier(int spellLevel) => 1f;
+
     private static void DoStep(EntityAgent caster, IWorldAccessor world, Vec3d lookDir, int side, int spellLevel)
     {
         float force = StepDistance * (1f + 0.04f * (spellLevel - 1));
         Vec3d right = lookDir.Cross(new Vec3d(0, 1, 0)).Normalize();
         int stepSide = side == 2 ? 0 : side;
         Vec3d stepDir = (lookDir * 0.82 + right * (stepSide * 0.34)).Normalize();
-        caster.SidedPos.Motion.Add(stepDir.X * force, 0.03, stepDir.Z * force);
+        caster.Pos.Motion.Add(stepDir.X * force, 0.03, stepDir.Z * force);
 
         if (world.Api is not ICoreServerAPI sapi) return;
         var channel = sapi.Network.GetChannel("spellsandrunes");
@@ -98,8 +102,8 @@ public class FireDance : Spell
     {
         Vec3d right = lookDir.Cross(new Vec3d(0, 1, 0)).Normalize();
         Vec3d flameDir = (lookDir * 0.9 + right * (side * 0.5)).Normalize();
-        double forwardOffset = side == 0 ? 1.35 : 0.95;
-        var origin = caster.SidedPos.XYZ
+        double forwardOffset = side == 0 ? 1.85 : 1.05;
+        var origin = caster.Pos.XYZ
             .Add(lookDir * forwardOffset)
             .Add(right * (side * 0.72))
             .Add(0, caster.LocalEyePos.Y - 0.48, 0);
@@ -110,7 +114,7 @@ public class FireDance : Spell
         world.GetEntitiesAround(origin, range + 1, range + 1, e =>
         {
             if (e.EntityId == caster.EntityId || e is not EntityAgent) return false;
-            Vec3d target = e.SidedPos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
+            Vec3d target = e.Pos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
             Vec3d toEntity = target - origin;
             if (toEntity.Length() > range) return false;
             if (flameDir.Dot(toEntity.Normalize()) < cosAngle) return false;

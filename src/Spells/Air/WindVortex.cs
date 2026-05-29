@@ -22,7 +22,7 @@ public class WindVortex : Spell
     public override float FluxCost => 60f;
     public override float CastTime => 0f;
     public override string? AnimationCode => "air_wind_vortex";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => true;
 
     public override IReadOnlyList<string> Prerequisites => ["air_wind_spear"];
 
@@ -32,7 +32,7 @@ public class WindVortex : Spell
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
-        SpawnFx(world, caster.SidedPos.XYZ.Add(0, 0.8, 0), caster.SidedPos.GetViewVector().ToVec3d().Normalize(), spellLevel);
+        SpawnFx(world, caster.Pos.XYZ.Add(0, 0.8, 0), caster.Pos.GetViewVector().ToVec3d().Normalize(), spellLevel);
 
         if (world.Side != EnumAppSide.Server || world.Api == null) return;
 
@@ -42,8 +42,8 @@ public class WindVortex : Spell
         listenerId = world.Api.Event.RegisterGameTickListener(dt =>
         {
             elapsed += dt;
-            var center = caster.SidedPos.XYZ.Add(0, 0.8, 0);
-            var lookDir = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
+            var center = caster.Pos.XYZ.Add(0, 0.8, 0);
+            var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
             SpawnFx(world, center, lookDir, spellLevel);
 
 

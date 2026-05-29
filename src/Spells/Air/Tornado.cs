@@ -19,7 +19,7 @@ public class Tornado : Spell
     public override float FluxCost => 70f;
     public override float CastTime => 2.0f;
     public override string? AnimationCode => "air_wind_tornado";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => true;
 
     public override IReadOnlyList<string> Prerequisites => ["air_storms_eye"];
 
@@ -27,7 +27,7 @@ public class Tornado : Spell
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
-        var baseCenter = caster.SidedPos.XYZ.Add(caster.SidedPos.GetViewVector().ToVec3d().Normalize() * 9).Add(0, 0.5, 0);
+        var baseCenter = caster.Pos.XYZ.Add(caster.Pos.GetViewVector().ToVec3d().Normalize() * 9).Add(0, 0.5, 0);
         baseCenter = ClampToSurface(world, baseCenter);
         SpawnFx(world, baseCenter, spellLevel, 2.2f);
 
@@ -64,10 +64,10 @@ public class Tornado : Spell
             world.GetEntitiesAround(currentCenter, 2.3f, 3.5f, e =>
             {
                 if (e.EntityId == caster.EntityId || e is not EntityAgent) return false;
-                Vec3d toCenter = currentCenter - e.SidedPos.XYZ;
+                Vec3d toCenter = currentCenter - e.Pos.XYZ;
                 double dist = Math.Max(0.1, toCenter.Length());
                 var dir = toCenter.Normalize();
-                e.SidedPos.Motion.Add(dir.X * 0.08, 0.16 + (float)(0.12 / dist), dir.Z * 0.08);
+                e.Pos.Motion.Add(dir.X * 0.08, 0.16 + (float)(0.12 / dist), dir.Z * 0.08);
                 e.ReceiveDamage(new DamageSource
                 {
                     Source = EnumDamageSource.Entity,

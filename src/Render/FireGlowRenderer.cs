@@ -17,7 +17,9 @@ public class FireGlowRenderer : IRenderer
 
     private class FireLight : IPointLight
     {
-        public Vec3f Color { get; set; } = new Vec3f(0.04f, 0.35f, 1f);
+        // Vintage Story derives dynamic light range from the color vector magnitude.
+        // Keep this above normal 0-1 color values or the light barely reaches a block.
+        public Vec3f Color { get; set; } = new Vec3f(8.5f, 3.4f, 0.8f);
         public Vec3d Pos { get; set; } = new();
     }
 
@@ -63,6 +65,31 @@ public class FireGlowRenderer : IRenderer
                 Pos = origin + direction * dist + right * (Math.Cos(a) * r) + up * (Math.Sin(a) * r),
                 Vel = direction * (0.6 + rng.NextDouble() * 1.2) + new Vec3d(0, 0.7 + rng.NextDouble() * 0.8, 0),
                 Radius = 0.07f + (float)rng.NextDouble() * 0.08f,
+                Life = life,
+                MaxLife = life,
+            });
+        }
+    }
+
+    public void AddWispGlow(Vec3d origin, int count = 14)
+    {
+        var rng = capi.World.Rand;
+
+        for (int i = 0; i < count; i++)
+        {
+            double a = rng.NextDouble() * Math.PI * 2;
+            double y = rng.NextDouble() * Math.PI * 2;
+            double r = 0.12 + rng.NextDouble() * 0.22;
+            float life = 0.55f + (float)rng.NextDouble() * 0.35f;
+
+            points.Add(new GlowPoint
+            {
+                Pos = origin.AddCopy(Math.Cos(a) * r, Math.Sin(y) * 0.12, Math.Sin(a) * r),
+                Vel = new Vec3d(
+                    (rng.NextDouble() - 0.5) * 0.18,
+                    0.05 + rng.NextDouble() * 0.14,
+                    (rng.NextDouble() - 0.5) * 0.18),
+                Radius = 0.12f + (float)rng.NextDouble() * 0.08f,
                 Life = life,
                 MaxLife = life,
             });

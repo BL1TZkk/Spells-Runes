@@ -2,6 +2,7 @@ using System;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace SpellsAndRunes.Spells.Fire;
 
@@ -9,14 +10,16 @@ public class Spark : Spell
 {
     public override string Id          => "fire_spark";
     public override string Name        => "Spark";
-    public override string Description => "Strike the air with fire, sending a burst of damaging sparks forward.";
+    public override string Description => "Strike the air with fire, sending a burst of damaging sparks forward. Can light prepared fires and similar unlit blocks.";
 
     public override SpellTier    Tier    => SpellTier.Novice;
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType    Type    => SpellType.Offense;
 
     public override float FluxCost => 15f;
-    public override float CastTime => 1.0f;
+    private const int ReleaseFrame = 22;
+
+    public override float CastTime => ReleaseFrame / 30f;
 
     public override string? AnimationCode => "fire_spark";
 
@@ -45,8 +48,8 @@ public class Spark : Spell
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
-        var   origin   = caster.SidedPos.XYZ.Add(0, 0.9, 0);
-        var   lookDir  = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
+        var   lookDir  = caster.Pos.GetViewVector().ToVec3d().Normalize();
+        var   origin   = caster.Pos.XYZ.Add(lookDir * 0.45).Add(0, caster.LocalEyePos.Y - 0.28, 0);
         float range    = Range * GetRangeMultiplier(spellLevel);
         float dmg      = Damage * GetDamageMultiplier(spellLevel);
 
@@ -55,7 +58,7 @@ public class Spark : Spell
             if (e.EntityId == caster.EntityId) return false;
             if (e is not EntityAgent)          return false;
 
-            Vec3d targetPos = e.SidedPos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
+            Vec3d targetPos = e.Pos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
             Vec3d toEntity  = targetPos - origin;
             if (toEntity.Length() > range) return false;
             if (lookDir.Dot(toEntity.Normalize()) < CosAngle) return false;
@@ -72,7 +75,67 @@ public class Spark : Spell
             return false;
         });
 
-        SpawnFx(world, origin, lookDir, spellLevel, range);
+        TryIgniteAimedBlock(caster, world, origin, lookDir, range);
+        FireOrb.BroadcastFx(world, Id, origin, lookDir, spellLevel);
+    }
+
+    private static bool TryIgniteAimedBlock(EntityAgent caster, IWorldAccessor world, Vec3d origin, Vec3d lookDir, float range)
+    {
+        Vec3d target = origin + lookDir * range;
+        BlockSelection? bsel = null;
+        EntitySelection? esel = null;
+        world.RayTraceForSelection(origin, target, ref bsel, ref esel);
+        if (bsel == null) return false;
+
+        BlockPos pos = bsel.Position;
+        Block block = world.BlockAccessor.GetBlock(pos);
+        string path = block.Code?.Path ?? "";
+
+        if (TryIgniteBlock(caster, world, pos, block))
+        {
+            return true;
+        }
+
+        if (path.StartsWith("torch-", StringComparison.Ordinal) && path.Contains("-extinct-", StringComparison.Ordinal))
+        {
+            return TryExchangeBlock(world, pos, block.CodeWithVariant("state", "lit"));
+        }
+
+        if (path.StartsWith("stove-unlit-", StringComparison.Ordinal))
+        {
+            return TryExchangeBlock(world, pos, block.CodeWithVariant("state", "lit"));
+        }
+
+        return false;
+    }
+
+    private static bool TryIgniteBlock(EntityAgent caster, IWorldAccessor world, BlockPos pos, Block block)
+    {
+        if (caster is EntityPlayer player)
+        {
+            IPlayer? byPlayer = world.PlayerByUid(player.PlayerUID);
+            if (!world.Claims.TryAccess(byPlayer, pos, EnumBlockAccessFlags.Use)) return false;
+        }
+
+        IIgnitable? ignitable = block.GetInterface<IIgnitable>(world, pos);
+        if (ignitable == null) return false;
+
+        const float secondsIgniting = 5f;
+        EnumIgniteState state = ignitable.OnTryIgniteBlock(caster, pos, secondsIgniting);
+        if (state is not (EnumIgniteState.Ignitable or EnumIgniteState.IgniteNow)) return false;
+
+        EnumHandling handling = EnumHandling.PassThrough;
+        ignitable.OnTryIgniteBlockOver(caster, pos, secondsIgniting, ref handling);
+        return true;
+    }
+
+    private static bool TryExchangeBlock(IWorldAccessor world, BlockPos pos, AssetLocation code)
+    {
+        Block? block = world.GetBlock(code);
+        if (block == null || block.BlockId == 0) return false;
+
+        world.BlockAccessor.ExchangeBlock(block.BlockId, pos);
+        return true;
     }
 
     public static void SpawnFx(IWorldAccessor world, Vec3d origin, Vec3d lookDir, int spellLevel = 1, float? scaledRange = null)

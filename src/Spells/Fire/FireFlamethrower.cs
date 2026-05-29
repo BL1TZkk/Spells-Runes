@@ -3,6 +3,7 @@ using System;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace SpellsAndRunes.Spells.Fire;
 
@@ -20,10 +21,10 @@ public class FireFlamethrower : Spell
     public override float CastTime => 0f;
 
     public override string? AnimationCode => "fire_flamethrower";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => false;
 
-    public override IReadOnlyList<string> Prerequisites => ["fire_spark"];
-    public override (int col, int row) TreePosition => (3, 1);
+    public override IReadOnlyList<string> Prerequisites => ["fire_orb"];
+    public override (int col, int row) TreePosition => (2, 4);
 
     public const float Range = 7f;
     public const float ConeAngleDeg = 24f;
@@ -36,15 +37,15 @@ public class FireFlamethrower : Spell
 
     public override void OnTick(EntityAgent caster, IWorldAccessor world, float deltaTime, int spellLevel = 1)
     {
-        var lookDir = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
-        var origin = caster.SidedPos.XYZ.Add(lookDir * 1.05).Add(0, caster.LocalEyePos.Y - 0.32, 0);
+        var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
+        var origin = caster.Pos.XYZ.Add(lookDir * 1.05).Add(0, caster.LocalEyePos.Y - 0.32, 0);
         float range = Range * GetRangeMultiplier(spellLevel);
         float cosAngle = (float)Math.Cos(ConeAngleDeg * Math.PI / 180.0);
 
         world.GetEntitiesAround(origin, range + 1, range + 1, e =>
         {
             if (e.EntityId == caster.EntityId || e is not EntityAgent) return false;
-            Vec3d target = e.SidedPos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
+            Vec3d target = e.Pos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
             Vec3d toEntity = target - origin;
             if (toEntity.Length() > range) return false;
             if (lookDir.Dot(toEntity.Normalize()) < cosAngle) return false;
@@ -79,6 +80,9 @@ public class FireFlamethrower : Spell
         if (existing == null || existing.BlockId != 0 && existing.Replaceable < fire.Replaceable) return;
 
         world.BlockAccessor.SetBlock(fire.BlockId, firePos);
+        world.BlockAccessor.GetBlockEntity(firePos)
+            ?.GetBehavior<BEBehaviorBurning>()
+            ?.OnFirePlaced(bsel.Face, caster is EntityPlayer player ? player.PlayerUID : null);
     }
 
     public static void SpawnFx(IWorldAccessor world, Vec3d origin, Vec3d lookDir, int spellLevel)

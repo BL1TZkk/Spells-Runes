@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
@@ -16,28 +17,49 @@ public class FireFist : Spell
     public override SpellType Type => SpellType.Offense;
 
     public override float FluxCost => 18f;
-    public override float CastTime => 0.6f;
+    private const int FirstHitFrame = 13;
+    private static readonly int[] HitFrames = { 13, 21, 29, 36 };
+
+    public override float CastTime => FirstHitFrame / 30f;
 
     public override string? AnimationCode => "fire_fist";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => false;
 
-    public override IReadOnlyList<string> Prerequisites => ["fire_spark"];
-    public override (int col, int row) TreePosition => (3, 0);
+    public override IReadOnlyList<string> Prerequisites => ["fire_hot_skin"];
+    public override (int col, int row) TreePosition => (0, 2);
 
     public const float Range = 2.2f;
     public const float Damage = 6f;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
-        var origin = caster.SidedPos.XYZ.Add(0, caster.LocalEyePos.Y - 0.25, 0);
-        var lookDir = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
-        float range = Range * GetRangeMultiplier(spellLevel);
-        float damage = Damage * GetDamageMultiplier(spellLevel);
+        if (world.Api == null) return;
+
+        for (int i = 0; i < HitFrames.Length; i++)
+        {
+            int hitIndex = i;
+            int delayMs = FrameToMs(HitFrames[i] - FirstHitFrame);
+            world.Api.Event.RegisterCallback(_ =>
+            {
+                if (!caster.Alive) return;
+                DoHit(caster, world, spellLevel, hitIndex);
+            }, delayMs);
+        }
+    }
+
+    private static int FrameToMs(int frame) => (int)Math.Round(frame / 30.0 * 1000.0);
+
+    private static void DoHit(EntityAgent caster, IWorldAccessor world, int spellLevel, int hitIndex)
+    {
+        var origin = caster.Pos.XYZ.Add(0, caster.LocalEyePos.Y - 0.25, 0);
+        var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
+        float range = Range * (1f + 0.10f * (spellLevel - 1));
+        float damage = Damage * (1f + 0.15f * (spellLevel - 1)) / HitFrames.Length;
 
         world.GetEntitiesAround(origin, range + 0.6f, range + 0.6f, e =>
         {
             if (e.EntityId == caster.EntityId || e is not EntityAgent) return false;
-            Vec3d target = e.SidedPos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
+            Vec3d target = e.Pos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
             Vec3d toTarget = target - origin;
             double along = toTarget.Dot(lookDir);
             if (along < 0 || along > range) return false;
@@ -53,7 +75,10 @@ public class FireFist : Spell
             return false;
         });
 
-        SpawnFx(world, origin, lookDir, spellLevel);
+        Vec3d right = lookDir.Cross(new Vec3d(0, 1, 0)).Normalize();
+        int side = hitIndex % 2 == 0 ? 1 : -1;
+        Vec3d fistOrigin = origin.AddCopy(lookDir * 0.35).Add(right * (0.22 * side));
+        FireOrb.BroadcastFx(world, "fire_fist", fistOrigin, lookDir, spellLevel);
     }
 
     public static void SpawnFx(IWorldAccessor world, Vec3d origin, Vec3d lookDir, int spellLevel)

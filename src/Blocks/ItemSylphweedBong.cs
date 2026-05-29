@@ -1,5 +1,6 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 using SpellsAndRunes.Spells;
 
@@ -39,7 +40,7 @@ public class ItemSylphweedBong : Item
         var data = PlayerSpellData.For(byEntity);
         if (data.IsFluxUnlocked)
         {
-            player.SendMessage(0, "The flux already flows through you.", EnumChatType.Notification);
+            player.SendMessage(0, Lang.Get("spellsandrunes:message-flux-already-unlocked"), EnumChatType.Notification);
             return;
         }
 
@@ -55,7 +56,7 @@ public class ItemSylphweedBong : Item
 
         if (groundSlot == null)
         {
-            player.SendMessage(0, "You need ground sylphweed to smoke the pipe.", EnumChatType.Notification);
+            player.SendMessage(0, Lang.Get("spellsandrunes:message-sylphweed-ground-required"), EnumChatType.Notification);
             return;
         }
 
@@ -65,7 +66,7 @@ public class ItemSylphweedBong : Item
 
         // Unlock flux
         data.UnlockFlux();
-        player.SendMessage(0, "The smoke fills your lungs. A deep hum resonates through your body — flux awakens.", EnumChatType.Notification);
+        player.SendMessage(0, Lang.Get("spellsandrunes:message-flux-awakens"), EnumChatType.Notification);
 
     }
 }

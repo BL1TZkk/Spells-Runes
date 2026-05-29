@@ -57,6 +57,12 @@ public class HudRadialMenu : GuiDialog
     private void Redraw()
         => (SingleComposer?.GetElement("canvas") as GuiElementCustomDraw)?.Redraw();
 
+    public void RefreshHud()
+    {
+        Redraw();
+        indicator.RedrawIndicator();
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     public bool IsOpen => isOpen;

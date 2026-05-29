@@ -1,0 +1,41 @@
+{
+	"code": "fire-mine",
+	"class": "EntityFireMine",
+	"tags": ["inanimate"],
+	"hitboxSize": { "x": 0.24, "y": 0.09 },
+	"deadHitboxSize": { "x": 0.24, "y": 0.09 },
+	"eyeHeight": 0.04,
+	"canClimb": false,
+	"drops": [],
+
+	"client": {
+		"renderer": "Shape",
+		"size": 1.0,
+		"pitchStep": false,
+		"shape": { "base": "spellsandrunes:entity/fire-mine" },
+		"texture": { "base": "spellsandrunes:block/ignis-fragment" },
+		"glowLevel": 255,
+		"behaviors": [
+			{
+				"code": "passivephysics",
+				"groundDragFactor": 1,
+				"airDragFactor": 1,
+				"gravityFactor": 0
+			},
+			{ "code": "interpolateposition" }
+		]
+	},
+
+	"server": {
+		"behaviors": [
+			{
+				"code": "passivephysics",
+				"groundDragFactor": 1,
+				"airDragFactor": 1,
+				"gravityFactor": 0
+			},
+			{ "code": "despawn", "minSeconds": 45 },
+			{ "code": "entitystatetags" }
+		]
+	}
+}

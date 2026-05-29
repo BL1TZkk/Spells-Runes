@@ -20,8 +20,8 @@ public class StormsEye : Spell
 
     public override float FluxCost => 55f;
     public override float CastTime => 1.5f;
-    public override string? AnimationCode => "air_storms_eye";
-    public override bool AnimationUpperBodyOnly => false;
+    public override string? AnimationCode => "air_stroms_eye";
+    public override bool AnimationTakesOverBody => true;
 
     public override IReadOnlyList<string> Prerequisites => ["air_wind_clone"];
 
@@ -34,7 +34,7 @@ public class StormsEye : Spell
 
     public static Vec3d GetCenter(EntityAgent caster)
     {
-        var center = caster.SidedPos.XYZ.Add(caster.SidedPos.GetViewVector().ToVec3d().Normalize() * Range).Add(0, 0.5, 0);
+        var center = caster.Pos.XYZ.Add(caster.Pos.GetViewVector().ToVec3d().Normalize() * Range).Add(0, 0.5, 0);
         return ClampToSurface(caster.World, center);
     }
 
@@ -56,15 +56,15 @@ public class StormsEye : Spell
             world.GetEntitiesAround(center, Radius + 0.5f, Radius + 0.5f, e =>
             {
                 if (e.EntityId == caster.EntityId || e is not EntityAgent) return false;
-                Vec3d toCenter = center - e.SidedPos.XYZ;
+                Vec3d toCenter = center - e.Pos.XYZ;
                 double dist = toCenter.Length();
                 if (dist <= 0.01 || dist > Radius + 0.4f) return false;
 
                 var dir = toCenter.Normalize();
                 float holdFactor = dist < 0.6 ? 0.025f : PullStrength;
-                e.SidedPos.Motion.Set(
+                e.Pos.Motion.Set(
                     dir.X * holdFactor,
-                    Math.Max(e.SidedPos.Motion.Y * 0.2, -0.02),
+                    Math.Max(e.Pos.Motion.Y * 0.2, -0.02),
                     dir.Z * holdFactor);
                 return false;
             });

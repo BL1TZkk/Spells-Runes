@@ -19,10 +19,12 @@ public class FireOrb : Spell
     public override SpellType Type => SpellType.Offense;
 
     public override float FluxCost => 20f;
-    public override float CastTime => 0f;
+    private const int FirstReleaseFrame = 19;
+
+    public override float CastTime => FirstReleaseFrame / 30f;
 
     public override string? AnimationCode => "fire_orb";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => false;
 
     public override IReadOnlyList<string> Prerequisites => ["fire_spark"];
     public override (int col, int row) TreePosition => (2, 2);
@@ -39,20 +41,23 @@ public class FireOrb : Spell
         int[] releaseFrames = { 19, 29, 39 };
         for (int i = 0; i < releaseFrames.Length; i++)
         {
-            int delayMs = FrameToMs(releaseFrames[i]);
+            int delayMs = FrameToMs(releaseFrames[i] - FirstReleaseFrame);
             world.Api.Event.RegisterCallback(_ =>
             {
                 if (!caster.Alive) return;
-                var lookDir = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
-                var origin = caster.SidedPos.XYZ
+                var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
+                var origin = caster.Pos.XYZ
                     .Add(lookDir * 0.9)
                     .Add(0, caster.LocalEyePos.Y - 0.35, 0);
+                BroadcastFx(world, "fire_orb_release_smoke", origin, lookDir, spellLevel);
                 StartOrb(caster, world, origin, lookDir, spellLevel);
             }, delayMs);
         }
     }
 
     private static int FrameToMs(int frame) => (int)Math.Round(frame / 30.0 * 1000.0);
+
+    public override float GetCastTimeMultiplier(int spellLevel) => 1f;
 
     private static void StartOrb(EntityAgent caster, IWorldAccessor world, Vec3d origin, Vec3d lookDir, int spellLevel)
     {
@@ -122,7 +127,7 @@ public class FireOrb : Spell
         world.GetEntitiesAround(mid, queryRadius, queryRadius, e =>
         {
             if (e.EntityId == caster.EntityId || e is not EntityAgent agent) return false;
-            Vec3d target = e.SidedPos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
+            Vec3d target = e.Pos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
             double t = (target - from).Dot(seg) / segLenSq;
             if (t < 0 || t > 1) return false;
             Vec3d closestPoint = from + seg * t;
@@ -214,6 +219,36 @@ public class FireOrb : Spell
                 ParticleModel = EnumParticleModel.Quad,
                 WithTerrainCollision = false,
                 ShouldDieInLiquid = true
+            });
+        }
+    }
+
+    public static void SpawnReleaseSmokeFx(IWorldAccessor world, Vec3d origin, Vec3d lookDir, int spellLevel)
+    {
+        var rng = world.Rand;
+        int mult = 1 + (spellLevel - 1) / 4;
+        for (int i = 0; i < 9 * mult; i++)
+        {
+            world.SpawnParticles(new SimpleParticleProperties
+            {
+                MinQuantity = 1,
+                AddQuantity = 0,
+                MinPos = origin,
+                AddPos = new Vec3d(0.16, 0.12, 0.16),
+                MinVelocity = new Vec3f((float)(-lookDir.X * 0.12), 0.10f, (float)(-lookDir.Z * 0.12)),
+                AddVelocity = new Vec3f(0.14f, 0.16f, 0.14f),
+                LifeLength = 0.36f + (float)rng.NextDouble() * 0.20f,
+                MinSize = 0.08f,
+                MaxSize = 0.22f,
+                SizeEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, 1.5f),
+                OpacityEvolve = new EvolvingNatFloat(EnumTransformFunction.QUADRATIC, -16f),
+                GravityEffect = -0.02f,
+                Color = ColorUtil.ColorFromRgba(75 + rng.Next(50), 70 + rng.Next(45), 65 + rng.Next(40), 135),
+                ParticleModel = EnumParticleModel.Quad,
+                WithTerrainCollision = false,
+                ShouldDieInLiquid = true,
+                SelfPropelled = true,
+                WindAffectednes = 0.7f
             });
         }
     }

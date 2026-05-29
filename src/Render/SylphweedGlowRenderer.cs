@@ -39,7 +39,8 @@ public class SylphweedGlowRenderer : IRenderer
 
     private class SylphLight : IPointLight
     {
-        public Vec3f Color { get; set; } = new Vec3f(0.5f, 0.5f, 0.5f);
+        // Magnitude controls dynamic light range in Vintage Story.
+        public Vec3f Color { get; set; } = new Vec3f(5.2f, 5.6f, 6.0f);
         public Vec3d Pos   { get; set; } = new Vec3d();
     }
 

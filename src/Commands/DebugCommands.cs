@@ -32,6 +32,7 @@ public static class DebugCommands
             // /snr xp <element> <amount>
             .BeginSubCommand("xp")
                 .WithDescription("Add element XP (e.g. /snr xp Air 100)")
+                .RequiresPrivilege(Privilege.controlserver)
                 .WithArgs(
                     api.ChatCommands.Parsers.Word("element"),
                     api.ChatCommands.Parsers.Int("amount"))
@@ -41,6 +42,7 @@ public static class DebugCommands
             // /snr unlock <spellId>
             .BeginSubCommand("unlock")
                 .WithDescription("Force-unlock a spell by id")
+                .RequiresPrivilege(Privilege.controlserver)
                 .WithArgs(api.ChatCommands.Parsers.Word("spellId"))
                 .HandleWith(OnUnlock)
             .EndSubCommand()
@@ -48,6 +50,7 @@ public static class DebugCommands
             // /snr activator <id>
             .BeginSubCommand("activator")
                 .WithDescription("Trigger a spell activator")
+                .RequiresPrivilege(Privilege.controlserver)
                 .WithArgs(api.ChatCommands.Parsers.Word("activatorId"))
                 .HandleWith(OnActivator)
             .EndSubCommand()
@@ -55,18 +58,21 @@ public static class DebugCommands
             // /snr status
             .BeginSubCommand("status")
                 .WithDescription("Show element XP and unlocked spells")
+                .RequiresPrivilege(Privilege.controlserver)
                 .HandleWith(OnStatus)
             .EndSubCommand()
 
-            // /snr unlock-flux
-            .BeginSubCommand("unlock-flux")
+            // /snr unlockflux
+            .BeginSubCommand("unlockflux")
                 .WithDescription("Unlock Flux (simulate smoking Sylphweed)")
+                .RequiresPrivilege(Privilege.controlserver)
                 .HandleWith(OnUnlockFlux)
             .EndSubCommand()
 
-            // /snr unlock-element <element>
-            .BeginSubCommand("unlock-element")
-                .WithDescription("Unlock an element tree (e.g. /snr unlock-element Air)")
+            // /snr unlockelement <element>
+            .BeginSubCommand("unlockelement")
+                .WithDescription("Unlock an element tree (e.g. /snr unlockelement Air)")
+                .RequiresPrivilege(Privilege.controlserver)
                 .WithArgs(api.ChatCommands.Parsers.Word("element"))
                 .HandleWith(OnUnlockElement)
             .EndSubCommand()
@@ -74,43 +80,33 @@ public static class DebugCommands
             // /snr flux [on|off]
             .BeginSubCommand("flux")
                 .WithDescription("Toggle infinite flux (sets regen to 200/s)")
+                .RequiresPrivilege(Privilege.controlserver)
                 .WithArgs(api.ChatCommands.Parsers.OptionalWord("toggle"))
                 .HandleWith(OnFlux)
             .EndSubCommand()
 
-            .BeginSubCommand("flux-alignment")
-                .WithDescription("Inspect and modify Flux Alignment")
-                .BeginSubCommand("show")
-                    .WithDescription("Show current Flux Alignment level and derived stats")
-                    .HandleWith(OnFluxAlignmentShow)
-                .EndSubCommand()
-                .BeginSubCommand("set")
-                    .WithDescription("Set Flux Alignment level (1 or 2)")
-                    .WithArgs(api.ChatCommands.Parsers.Int("level"))
-                    .HandleWith(OnFluxAlignmentSet)
-                .EndSubCommand()
-                .BeginSubCommand("trigger")
-                    .WithDescription("Trigger the level 2 Flux Alignment activator")
-                    .HandleWith(OnFluxAlignmentTrigger)
-                .EndSubCommand()
-                .BeginSubCommand("reset")
-                    .WithDescription("Remove the level 2 activator and reset Flux Alignment to level 1")
-                    .HandleWith(OnFluxAlignmentReset)
-                .EndSubCommand()
+            // /snr fluxlvl <level>
+            .BeginSubCommand("fluxlvl")
+                .WithDescription("Unlock Flux Alignment level 1-4 (e.g. /snr fluxlvl 2)")
+                .RequiresPrivilege(Privilege.controlserver)
+                .WithArgs(api.ChatCommands.Parsers.Int("level"))
+                .HandleWith(OnFluxLevel)
             .EndSubCommand()
 
-            // /snr spell_lvl [on|off]
-            .BeginSubCommand("spell_lvl")
-                .WithDescription("Get specific level for spell  (e.g. /snr spell_lvl fire_spark 3)")
-                    .WithArgs(
-                        api.ChatCommands.Parsers.Word("spellId"),
-                        api.ChatCommands.Parsers.Int("level"))
+            // /snr spelllvl <spellId> <level>
+            .BeginSubCommand("spelllvl")
+                .WithDescription("Set a spell level (e.g. /snr spelllvl fire_spark 3)")
+                .RequiresPrivilege(Privilege.controlserver)
+                .WithArgs(
+                    api.ChatCommands.Parsers.Word("spellId"),
+                    api.ChatCommands.Parsers.Int("level"))
                 .HandleWith(OnSpellLevel)
             .EndSubCommand()
 
             // /snr findsylphweed [radius] [max]
             .BeginSubCommand("findsylphweed")
                 .WithDescription("Find nearby sylphweed blocks (usage: /snr findsylphweed 128 10)")
+                .RequiresPrivilege(Privilege.controlserver)
                 .WithArgs(
                     api.ChatCommands.Parsers.OptionalWord("radius"),
                     api.ChatCommands.Parsers.OptionalWord("max"))
@@ -128,22 +124,7 @@ public static class DebugCommands
         return TextCommandResult.Success($"Infinite flux: {(InfiniteFlux ? "ON" : "OFF")}");
     }
 
-    private static TextCommandResult OnFluxAlignmentShow(TextCommandCallingArgs args)
-    {
-        if (args.Caller.Entity is not { } entity)
-            return TextCommandResult.Error("No player entity found.");
-
-        if (entity.GetBehavior<EntityBehaviorFlux>() is not { } behavior)
-            return TextCommandResult.Error("Flux behavior is not attached to this entity.");
-
-        int level = behavior.GetFluxAlignmentLevel();
-        float maxFlux = behavior.GetMaxFluxForLevel(level);
-        float regen = behavior.GetRegenForLevel(level);
-        float currentFlux = entity.WatchedAttributes.GetFloat("spellsandrunes:flux", 0f);
-        return TextCommandResult.Success($"Flux Alignment level {level}. Flux: {currentFlux:0.#}/{maxFlux:0.#}. Regen: {regen:0.#}/s.");
-    }
-
-    private static TextCommandResult OnFluxAlignmentSet(TextCommandCallingArgs args)
+    private static TextCommandResult OnFluxLevel(TextCommandCallingArgs args)
     {
         if (args.Caller.Entity is not { } entity)
             return TextCommandResult.Error("No player entity found.");
@@ -152,50 +133,22 @@ public static class DebugCommands
             return TextCommandResult.Error("Flux behavior is not attached to this entity.");
 
         int level = (int)args[0];
-        if (level is < 1 or > 2)
-            return TextCommandResult.Error("Flux Alignment level must be 1 or 2.");
+        if (level is < 1 or > 4)
+            return TextCommandResult.Error("Flux Alignment level must be between 1 and 4.");
+
+        var data = PlayerSpellData.For(entity);
+        if (!data.IsFluxUnlocked) data.UnlockFlux();
+
+        var activators = entity.WatchedAttributes.GetOrAddTreeAttribute("snr:activators");
+        if (level >= 2) activators.SetInt(EntityBehaviorFlux.FluxAlignmentLevel2Activator, 1);
+        if (level >= 3) activators.SetInt(EntityBehaviorFlux.FluxAlignmentLevel3Activator, 1);
+        if (level >= 4) activators.SetInt(EntityBehaviorFlux.FluxAlignmentLevel4Activator, 1);
+        entity.WatchedAttributes.MarkPathDirty("snr:activators");
 
         int applied = behavior.SetFluxAlignmentLevel(level);
         float maxFlux = behavior.GetMaxFluxForLevel(applied);
         float regen = behavior.GetRegenForLevel(applied);
-        return TextCommandResult.Success($"Flux Alignment set to level {applied}. Effective stats: {maxFlux:0.#} max flux, {regen:0.#}/s regen.");
-    }
-
-    private static TextCommandResult OnFluxAlignmentTrigger(TextCommandCallingArgs args)
-    {
-        if (args.Caller.Entity is not { } entity)
-            return TextCommandResult.Error("No player entity found.");
-
-        if (entity.GetBehavior<EntityBehaviorFlux>() is not { } behavior)
-            return TextCommandResult.Error("Flux behavior is not attached to this entity.");
-
-        var activators = entity.WatchedAttributes.GetOrAddTreeAttribute("snr:activators");
-        activators.SetInt(EntityBehaviorFlux.FluxAlignmentLevel2Activator, 1);
-        entity.WatchedAttributes.MarkPathDirty("snr:activators");
-
-        behavior.TryPromoteAlignmentFromActivators();
-        int level = behavior.GetFluxAlignmentLevel();
-        float maxFlux = behavior.GetMaxFluxForLevel(level);
-        float regen = behavior.GetRegenForLevel(level);
-        return TextCommandResult.Success($"Triggered Flux Alignment activator '{EntityBehaviorFlux.FluxAlignmentLevel2Activator}'. Level is now {level} ({maxFlux:0.#} max, {regen:0.#}/s regen).");
-    }
-
-    private static TextCommandResult OnFluxAlignmentReset(TextCommandCallingArgs args)
-    {
-        if (args.Caller.Entity is not { } entity)
-            return TextCommandResult.Error("No player entity found.");
-
-        if (entity.GetBehavior<EntityBehaviorFlux>() is not { } behavior)
-            return TextCommandResult.Error("Flux behavior is not attached to this entity.");
-
-        if (entity.WatchedAttributes.GetTreeAttribute("snr:activators") is TreeAttribute activators)
-        {
-            activators.RemoveAttribute(EntityBehaviorFlux.FluxAlignmentLevel2Activator);
-            entity.WatchedAttributes.MarkPathDirty("snr:activators");
-        }
-
-        behavior.SetFluxAlignmentLevel(1);
-        return TextCommandResult.Success("Flux Alignment reset to level 1 and level 2 activator removed.");
+        return TextCommandResult.Success($"Flux Alignment level {applied} unlocked. Effective stats: {maxFlux:0.#} max flux, {regen:0.#}/s regen.");
     }
 
     private static TextCommandResult OnSpellLevel(TextCommandCallingArgs args)

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "lore_ignis_001",
+    "category": "lore",
+    "title": "Lore X",
+    "preview": "Lorem ipsum dolor sit amet...",
+    "body": [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer ignis vel arcu at gravida, sed cursus erat suscipit.",
+      "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; praesent vitae sem nec neque facilisis dictum."
+    ],
+    "unlockedByDefault": true
+  },
+  {
+    "id": "lore_runes_001",
+    "category": "lore",
+    "title": "Runic Margins",
+    "preview": "Curabitur non felis in lacus...",
+    "body": [
+      "Curabitur non felis in lacus finibus efficitur. Donec vel massa vitae nunc cursus dignissim in a justo.",
+      "Suspendisse potenti. Nam vitae neque nec odio ornare eleifend vel in sapien."
+    ],
+    "unlockedByDefault": true
+  },
+  {
+    "id": "journal_flux_echo_001",
+    "category": "journal",
+    "title": "Flux Echo",
+    "preview": "Sed vitae erat eu massa...",
+    "body": [
+      "Sed vitae erat eu massa sodales fermentum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames.",
+      "Aliquam erat volutpat. Nunc in risus a augue ullamcorper ultrices."
+    ],
+    "unlockedByDefault": true
+  },
+  {
+    "id": "journal_first_cast_001",
+    "category": "journal",
+    "title": "First Cast",
+    "preview": "Mauris laoreet, lectus at...",
+    "body": [
+      "Mauris laoreet, lectus at cursus imperdiet, nulla enim tincidunt metus, vel placerat arcu mauris nec libero.",
+      "Phasellus euismod arcu vitae augue viverra, at fermentum metus bibendum."
+    ],
+    "unlockedByDefault": true
+  },
+  {
+    "id": "journal_hidden_001",
+    "category": "journal",
+    "title": "Hidden Journal",
+    "preview": "This entry should stay hidden until unlocked.",
+    "body": [
+      "This placeholder entry exists to verify that locked spellbook pages remain invisible until a server-side unlock call reveals them."
+    ],
+    "unlockedByDefault": false
+  }
+]

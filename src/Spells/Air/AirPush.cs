@@ -46,15 +46,15 @@ public class AirPush : Spell
     {
         float lvlMul   = LevelMultiplier(spellLevel);
         float range    = Range * GetRangeMultiplier(spellLevel);
-        var   origin   = caster.SidedPos.XYZ.Add(0, 0.5, 0);
-        var   lookDir  = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
+        var   origin   = caster.Pos.XYZ.Add(0, 0.5, 0);
+        var   lookDir  = caster.Pos.GetViewVector().ToVec3d().Normalize();
 
         world.GetEntitiesAround(origin, range + 1, range + 1, e =>
         {
             if (e.EntityId == caster.EntityId) return false;
             if (e is not EntityAgent agent)    return false;
 
-            Vec3d targetPos = e.SidedPos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
+            Vec3d targetPos = e.Pos.XYZ.Add(0, e.LocalEyePos.Y * 0.5, 0);
             Vec3d toEntity  = targetPos - origin;
             double dist     = toEntity.Length();
             if (dist > range) return false;
@@ -69,7 +69,7 @@ public class AirPush : Spell
             float falloff = 1f - (float)(dist / range) * 0.5f;
             float force   = BaseForce * lvlMul / weight * falloff;
 
-            agent.SidedPos.Motion.Add(lookDir.X * force, 0.15f * falloff, lookDir.Z * force);
+            agent.Pos.Motion.Add(lookDir.X * force, 0.15f * falloff, lookDir.Z * force);
             return false;
         });
 

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.Common;
+using SpellsAndRunes.Lore;
 
 namespace SpellsAndRunes.Spells;
 
@@ -33,6 +35,8 @@ public class PlayerSpellData
     private const string AttrHotbar       = "snr:hotbar";
     private const string AttrSpellXp      = "snr:spellxp";      // ITree: spellId -> total raw xp
     private const string AttrSpellLevel   = "snr:spelllevel";   // ITree: spellId -> current level
+    private const string AttrLoreUnlocked = "snr:loreunlocked"; // ITree: lore entry id -> unlocked
+    private const string AttrFluxAlignmentLevel = "spellsandrunes:fluxalignmentlevel";
     private const int    HotbarSlots      = 5;
 
     private readonly Entity entity;
@@ -138,6 +142,38 @@ public class PlayerSpellData
     }
 
     // -----------------------------------------------------------------------
+    // Lore and journal unlocks
+    // -----------------------------------------------------------------------
+
+    public bool IsLoreEntryUnlocked(string entryId)
+    {
+        if (string.IsNullOrWhiteSpace(entryId)) return false;
+        if (SpellbookLoreRegistry.Get(entryId)?.UnlockedByDefault == true) return true;
+        return GetTree(AttrLoreUnlocked).HasAttribute(entryId);
+    }
+
+    public void UnlockLoreEntry(string entryId)
+    {
+        if (string.IsNullOrWhiteSpace(entryId)) return;
+        GetTree(AttrLoreUnlocked).SetInt(entryId, 1);
+        entity.WatchedAttributes.MarkPathDirty(AttrLoreUnlocked);
+    }
+
+    public IEnumerable<string> GetUnlockedLoreEntryIds()
+    {
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in SpellbookLoreRegistry.All.Where(entry => entry.UnlockedByDefault))
+            if (ids.Add(entry.Id)) yield return entry.Id;
+
+        if (GetTree(AttrLoreUnlocked) is TreeAttribute tree)
+        {
+            foreach (var kv in tree)
+                if (ids.Add(kv.Key)) yield return kv.Key;
+        }
+    }
+
+    // -----------------------------------------------------------------------
     // Activators
     // -----------------------------------------------------------------------
 
@@ -147,13 +183,20 @@ public class PlayerSpellData
     public void TriggerActivator(string activatorId)
     {
         GetTree(AttrActivators).SetInt(activatorId, 1);
-        entity.WatchedAttributes.MarkPathDirty(AttrActivators);
+        MarkAllSpellDataDirty();
     }
 
     /// <summary>True once the player has smoked Sylphweed — gates all Flux features.</summary>
     public bool IsFluxUnlocked => HasActivator("sylphweed");
 
-    public void UnlockFlux() => TriggerActivator("sylphweed");
+    public void UnlockFlux()
+    {
+        TriggerActivator("sylphweed");
+        TriggerActivator("element_air");
+    }
+
+    public int GetFluxAlignmentLevel()
+        => Math.Clamp(entity.WatchedAttributes.GetInt(AttrFluxAlignmentLevel, 1), 1, 4);
 
     /// <summary>True if the player has unlocked a specific element tree.</summary>
     public bool IsElementUnlocked(SpellElement element) => HasActivator($"element_{element.ToString().ToLowerInvariant()}");
@@ -235,6 +278,19 @@ public class PlayerSpellData
 
     private ITreeAttribute GetTree(string key)
         => entity.WatchedAttributes.GetOrAddTreeAttribute(key);
+
+    public void MarkAllSpellDataDirty()
+    {
+        foreach (var key in new[]
+        {
+            AttrElementXp, AttrElementLevel, AttrElementSP, AttrUnlocked,
+            AttrActivators, AttrHotbar, AttrSpellXp, AttrSpellLevel, AttrLoreUnlocked
+        })
+        {
+            if (entity.WatchedAttributes.HasAttribute(key))
+                entity.WatchedAttributes.MarkPathDirty(key);
+        }
+    }
 
     public static PlayerSpellData For(Entity entity) => new(entity);
 }

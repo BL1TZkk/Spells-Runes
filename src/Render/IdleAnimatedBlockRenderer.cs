@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
+using Vintagestory.API.Client.Tesselation;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using SpellsAndRunes.Blocks;
 
 namespace SpellsAndRunes.Render;
 
@@ -55,7 +57,7 @@ public class IdleAnimatedBlockRenderer : IRenderer, IDisposable
     public void Register(Block block, BlockPos pos, string animCode = "idle", float[]? customTransform = null)
     {
         if (block?.Shape?.Base == null) return;
-        var group = GetOrCreateGroup(block);
+        var group = GetOrCreateGroup(block, pos);
         if (group == null) return;
 
         var inst = new Instance
@@ -112,9 +114,9 @@ public class IdleAnimatedBlockRenderer : IRenderer, IDisposable
         }
     }
 
-    private ShapeGroup? GetOrCreateGroup(Block block)
+    private ShapeGroup? GetOrCreateGroup(Block block, BlockPos pos)
     {
-        string key = block.Shape.Base.ToString();
+        string key = GetGroupKey(block, pos);
         if (groups.TryGetValue(key, out var existing)) return existing;
 
         var loc = block.Shape.Base.Clone().WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json");
@@ -129,7 +131,7 @@ public class IdleAnimatedBlockRenderer : IRenderer, IDisposable
         shape.CacheInvTransforms();
         shape.ResolveAndFindJoints(capi.World.Logger, key, elementsByName);
 
-        var texSource = capi.Tesselator.GetTextureSource(block);
+        var texSource = GetTextureSource(block, pos, shape, key);
         var meta = new TesselationMetaData
         {
             TexSource         = texSource,
@@ -156,6 +158,44 @@ public class IdleAnimatedBlockRenderer : IRenderer, IDisposable
         };
         groups[key] = group;
         return group;
+    }
+
+    private string GetGroupKey(Block block, BlockPos pos)
+    {
+        string key = block.Shape.Base.ToString();
+
+        if (block is BlockIgnisFragment ignisBlock)
+        {
+            string positionVariant = ignisBlock.GetPositionVariant();
+            var attachmentFace = BlockIgnisFragment.GetAttachmentFace(positionVariant);
+            var pedestalTexturePath = ignisBlock.ResolvePedestalTexture(pos, null!, 0, attachmentFace)
+                ?? BlockIgnisFragment.CrystalTexturePath;
+            key += $"|pedestal={pedestalTexturePath}";
+        }
+
+        return key;
+    }
+
+    private ITexPositionSource GetTextureSource(Block block, BlockPos pos, Shape shape, string key)
+    {
+        if (block is not BlockIgnisFragment ignisBlock)
+        {
+            return capi.Tesselator.GetTextureSource(block);
+        }
+
+        string positionVariant = ignisBlock.GetPositionVariant();
+        var attachmentFace = BlockIgnisFragment.GetAttachmentFace(positionVariant);
+        var pedestalTexturePath = ignisBlock.ResolvePedestalTexture(pos, null!, 0, attachmentFace)
+            ?? BlockIgnisFragment.CrystalTexturePath;
+
+        var textures = new Dictionary<string, CompositeTexture>
+        {
+            [BlockIgnisFragment.CrystalTextureCode] = new(BlockIgnisFragment.CrystalTexturePath),
+            [BlockIgnisFragment.EmissiveTextureCode] = new(BlockIgnisFragment.EmissiveTexturePath),
+            [BlockIgnisFragment.PedestalTextureCode] = new(pedestalTexturePath)
+        };
+
+        return new ShapeTextureSource(capi, shape, key, textures, path => path);
     }
 
     public void OnRenderFrame(float dt, EnumRenderStage stage)
@@ -196,6 +236,7 @@ public class IdleAnimatedBlockRenderer : IRenderer, IDisposable
 
         render.GLDepthMask(true);
         render.GlToggleBlend(true);
+        render.GlDisableCullFace();
 
         if (!isShadow)
         {
@@ -268,6 +309,7 @@ public class IdleAnimatedBlockRenderer : IRenderer, IDisposable
         }
 
         engineShader.Stop();
+        render.GlEnableCullFace();
         prevShader?.Use();
     }
 

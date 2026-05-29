@@ -34,7 +34,7 @@ public class HotSkin : Spell
 
     public override void OnTick(EntityAgent caster, IWorldAccessor world, float deltaTime, int spellLevel = 1)
     {
-        var center = caster.SidedPos.XYZ.Add(0, 0.9, 0);
+        var center = caster.Pos.XYZ.Add(0, 0.9, 0);
         float radius = Radius * GetRangeMultiplier(spellLevel);
 
         world.GetEntitiesAround(center, radius, radius, e =>

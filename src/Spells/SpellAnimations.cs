@@ -5,13 +5,10 @@ using Vintagestory.API.Common.Entities;
 
 namespace SpellsAndRunes.Spells;
 
-/// <summary>
-/// Client-side helper for playing spell animations on player entities.
-/// Handles upper-body masking so legs continue their locomotion animation.
-/// </summary>
+/// <summary>Client-side helper for playing spell animations on player entities.</summary>
 public static class SpellAnimations
 {
-    // Leg bones that should NOT be affected by upper-body spell animations
+    // Leg bones that should stay controlled by default movement for partial-body spell animations.
     private static readonly string[] LegBones =
     {
         "LowerTorso",
@@ -19,22 +16,28 @@ public static class SpellAnimations
         "UpperFootR", "LowerFootR", "FootAttachmentR",
     };
 
-    /// <summary>
-    /// Play a spell animation on the given entity.
-    /// If upperBodyOnly=true, leg bones are given weight 0 so locomotion continues normally.
-    /// </summary>
-    public static void Play(EntityAgent entity, string animCode, bool upperBodyOnly = true, float animationSpeed = 1f)
+    /// <summary>Play a spell animation on the given entity.</summary>
+    public static void Play(EntityAgent entity, string animCode, bool takesOverBody = false, float animationSpeed = 1f)
     {
+        bool snapSpark = animCode == "fire_spark";
         var meta = new AnimationMetaData
         {
             Code             = animCode,
             Animation        = animCode,
-            BlendMode        = EnumAnimationBlendMode.Add,
+            BlendMode        = takesOverBody ? EnumAnimationBlendMode.AddAverage : EnumAnimationBlendMode.Average,
             EaseInSpeed      = 10f,
-            EaseOutSpeed     = 10f,
-            Weight           = 1f,
+            EaseOutSpeed     = snapSpark ? 999f : 10f,
+            Weight           = takesOverBody ? 1000f : 1000f,
             AnimationSpeed   = animationSpeed,
+            SupressDefaultAnimation = takesOverBody,
         };
+
+        if (!takesOverBody)
+        {
+            meta.ElementWeight = new Dictionary<string, float>();
+            foreach (var bone in LegBones)
+                meta.ElementWeight[bone] = 0f;
+        }
 
         entity.AnimManager?.StartAnimation(meta);
     }

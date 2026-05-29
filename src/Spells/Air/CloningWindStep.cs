@@ -19,7 +19,7 @@ public class CloningWindStep : Spell
     public override float FluxCost => 50f;
     public override float CastTime => 0.5f;
     public override string? AnimationCode => "air_wind_step";
-    public override bool AnimationUpperBodyOnly => false;
+    public override bool AnimationTakesOverBody => true;
 
     public override IReadOnlyList<string> Prerequisites => ["air_wind_clone", "air_wind_step"];
 
@@ -27,16 +27,16 @@ public class CloningWindStep : Spell
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
-        var origin = caster.SidedPos.XYZ.Add(0, 0.7, 0);
+        var origin = caster.Pos.XYZ.Add(0, 0.7, 0);
         WindClone.SpawnFx(world, origin, spellLevel);
 
-        var lookDir = caster.SidedPos.GetViewVector().ToVec3d().Normalize();
-        WindSlash.HitAlongLine(caster, world, caster.SidedPos.XYZ.Add(0, caster.LocalEyePos.Y - 0.15, 0), lookDir,
+        var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
+        WindSlash.HitAlongLine(caster, world, caster.Pos.XYZ.Add(0, caster.LocalEyePos.Y - 0.15, 0), lookDir,
             WindStep.Range * GetRangeMultiplier(spellLevel), WindStep.HitRadius, WindStep.Damage * GetDamageMultiplier(spellLevel));
 
-        caster.SidedPos.Motion.Set(
+        caster.Pos.Motion.Set(
             lookDir.X * WindStep.ForwardForce * GetRangeMultiplier(spellLevel),
-            Math.Max(caster.SidedPos.Motion.Y, 0.05),
+            Math.Max(caster.Pos.Motion.Y, 0.05),
             lookDir.Z * WindStep.ForwardForce * GetRangeMultiplier(spellLevel));
 
        

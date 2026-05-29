@@ -41,5 +41,21 @@
   "item-sylphweed-clay-bong-fired-gray": "Gray Fired Clay Sylphweed Bong",
   "itemdesc-sylphweed-clay-bong-fired-gray": "A kiln-fired gray sylphweed bong, ready for use.",
   "item-sylphweed-clay-bong-fired-black": "Black Fired Clay Sylphweed Bong",
-  "itemdesc-sylphweed-clay-bong-fired-black": "A kiln-fired black sylphweed bong, ready for use."
+  "itemdesc-sylphweed-clay-bong-fired-black": "A kiln-fired black sylphweed bong, ready for use.",
+
+  "item-scroll-ashveil-1": "Ashveil Brotherhood — Record I",
+  "item-scroll-ashveil-2": "Ashveil Brotherhood — Record II",
+  "item-scroll-ashveil-3": "Ashveil Brotherhood — Record III",
+  "item-scroll-ashveil-4": "Ashveil Brotherhood — Record IV",
+  "item-scroll-fieldmanual-1": "Field Manual — Vol. I",
+  "item-scroll-fieldmanual-2": "Field Manual — Vol. II",
+  "item-scroll-aldenmoor-1": "Aldenmoor Lectures — I",
+  "item-scroll-aldenmoor-2": "Aldenmoor Lectures — II",
+  "item-scroll-aldenmoor-3": "Aldenmoor Lectures — III",
+  "item-scroll-voss-1": "Notes of Voss — I",
+  "item-scroll-voss-2": "Notes of Voss — II",
+  "item-scroll-voss-3": "Notes of Voss — III",
+  "item-scroll-voss-4": "Notes of Voss — IV",
+
+  "heldhelp-read": "Read"
 }

@@ -6,6 +6,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using SpellsAndRunes.Spells;
 using SpellsAndRunes.Network;
+using SpellsAndRunes.Lore;
 
 namespace SpellsAndRunes.GUI;
 
@@ -71,6 +72,10 @@ public class GuiDialogSpellbook : GuiDialog
 
     // ── Wheel element filter (-1 = All) ───────────────────────────────────────
     private int _wheelElemFilter = -1;
+
+    // ── Lore tab state ────────────────────────────────────────────────────────
+    private string? _selectedScrollId;
+    private readonly List<(string id, double x, double y, double w, double h)> _scrollListR = new();
 
     // ── Animation & screen coords ─────────────────────────────────────────────
     private double _t = 0;
@@ -1116,6 +1121,19 @@ public class GuiDialogSpellbook : GuiDialog
             }
         }
 
+        // Lore scroll list
+        if (_mainTab == 2)
+        {
+            foreach (var (id, rx, ry, rw, rh) in _scrollListR)
+            {
+                if (InRect(rx, ry, rw, rh, lx, ly))
+                {
+                    _selectedScrollId = id;
+                    Redraw(); e.Handled = true; return;
+                }
+            }
+        }
+
         // Detail buttons
         if (_hasAddBtn && InRect(_addBtn, lx, ly) && _selId[_elemTab] != null)
         { _pendingWheelAdd = _selId[_elemTab]; Redraw(); e.Handled = true; return; }
@@ -1442,65 +1460,159 @@ public class GuiDialogSpellbook : GuiDialog
 
     private void DrawLoreTab(Context ctx, double x, double y, double w, double h)
     {
-        var bg = new Random(9001);
+        _scrollListR.Clear();
 
-        // Decorative background — partial arcs and connecting lines
-        ctx.LineWidth = 0.7;
-        for (int i = 0; i < 7; i++)
+        var entity = capi.World.Player?.Entity;
+        var data   = entity != null ? PlayerSpellData.For(entity) : null;
+
+        double listW  = Math.Floor(w * 0.33);
+        double detailX = x + listW + 1;
+        double detailW = w - listW - 1;
+
+        // ── Left panel background ─────────────────────────────────────────────
+        ctx.SetSourceRGBA(0.06, 0.05, 0.04, 0.55);
+        Rect(ctx, x, y, listW, h); ctx.Fill();
+
+        // Divider
+        ctx.SetSourceRGBA(0.42, 0.34, 0.22, 0.35); ctx.LineWidth = 1;
+        ctx.MoveTo(x + listW, y); ctx.LineTo(x + listW, y + h); ctx.Stroke();
+
+        // ── Scroll list ───────────────────────────────────────────────────────
+        ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
+        double rowH   = 22;
+        double padX   = 10;
+        double cy2    = y + 8;
+
+        string[] elemOrder = { "Fire", "Air", "Water", "Earth" };
+        uint[]   elemClr   = { 0xFF3050E0, 0xFFEBDCD7, 0xFFC88030, 0xFF377DAF };
+
+        foreach (var (elem, eClrPacked) in elemOrder.Zip(elemClr))
         {
-            double ocx = x + bg.NextDouble() * w;
-            double ocy = y + bg.NextDouble() * h;
-            double or2 = 35 + bg.NextDouble() * 110;
-            double a1  = bg.NextDouble() * Math.PI * 2;
-            double a2  = a1 + bg.NextDouble() * Math.PI + 0.4;
-            ctx.SetSourceRGBA(0.75, 0.65, 0.40, 0.06 + bg.NextDouble() * 0.04);
-            ctx.Arc(ocx, ocy, or2, a1, a2); ctx.Stroke();
-        }
-        ctx.LineWidth = 0.5;
-        for (int i = 0; i < 6; i++)
-        {
-            ctx.SetSourceRGBA(0.70, 0.60, 0.35, 0.04);
-            double lx1 = x + bg.NextDouble() * w, ly1 = y + bg.NextDouble() * h;
-            double lx2 = x + bg.NextDouble() * w, ly2 = y + bg.NextDouble() * h;
-            ctx.MoveTo(lx1, ly1); ctx.LineTo(lx2, ly2); ctx.Stroke();
-        }
-        for (int i = 0; i < 14; i++)
-        {
-            double dx = x + bg.NextDouble() * w, dy = y + bg.NextDouble() * h;
-            ctx.SetSourceRGBA(0.80, 0.72, 0.48, 0.12 + bg.NextDouble() * 0.10);
-            ctx.Arc(dx, dy, 1.2, 0, Math.PI * 2); ctx.Fill();
+            var group = ScrollRegistry.ByElement(elem)
+                .Where(s => data?.HasReadScroll(s.Id) ?? false)
+                .ToList();
+            if (group.Count == 0) continue;
+
+            // Group header
+            ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Bold);
+            ctx.SetFontSize(9.5);
+            double er = ((eClrPacked >> 16) & 0xFF) / 255.0;
+            double eg = ((eClrPacked >> 8)  & 0xFF) / 255.0;
+            double eb = ((eClrPacked)        & 0xFF) / 255.0;
+            ctx.SetSourceRGBA(eb, eg, er, 0.70); // BGRA engine order
+            ctx.MoveTo(x + padX, cy2 + 10);
+            ctx.ShowText(elem.ToUpperInvariant());
+            cy2 += 16;
+
+            ctx.SelectFontFace("Sans", FontSlant.Normal, FontWeight.Normal);
+            ctx.SetFontSize(10.5);
+            foreach (var entry in group)
+            {
+                bool sel = _selectedScrollId == entry.Id;
+                if (sel)
+                {
+                    ctx.SetSourceRGBA(0.22, 0.18, 0.12, 0.70);
+                    Rect(ctx, x + 1, cy2, listW - 2, rowH); ctx.Fill();
+                    ctx.SetSourceRGBA(eb, eg, er, 0.30);
+                    ctx.Rectangle(x + 1, cy2, 3, rowH); ctx.Fill();
+                }
+                ctx.SetSourceRGBA(0.85, 0.78, 0.60, sel ? 0.95 : 0.60);
+                ctx.MoveTo(x + padX + 6, cy2 + rowH * 0.68);
+                ctx.ShowText(entry.Title);
+
+                _scrollListR.Add((entry.Id, x, cy2, listW, rowH));
+                cy2 += rowH;
+            }
+            cy2 += 6;
         }
 
-        // Gibberish manuscript text — very dim, italic serif
-        string[] frags = {
-            "verath", "sulken", "aevi", "mor", "thel", "krishan", "voss", "elthun",
-            "darak", "sael", "phyren", "kathos", "ulveri", "mnost", "theryn", "calsh",
-            "vorei", "duneth", "alvar", "sirek", "oreth", "valun", "sykhen", "dra",
-            "el", "van", "kor", "thal", "ish", "um", "per", "ael", "ver", "keth",
-            "yn", "ash", "elu", "vor", "tis", "aneth", "beryn", "caleth", "dynar",
-        };
-        string[] punct = { " ·", ",", " —", ":", " ∴", " ∵" };
+        // Empty state
+        if (_scrollListR.Count == 0)
+        {
+            ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
+            ctx.SetFontSize(10.5);
+            ctx.SetSourceRGBA(0.55, 0.48, 0.35, 0.45);
+            ctx.MoveTo(x + padX, y + h * 0.45);
+            ctx.ShowText("No scrolls read yet.");
+        }
 
+        // ── Right panel: selected scroll ──────────────────────────────────────
+        var selected = _selectedScrollId != null ? ScrollRegistry.Get(_selectedScrollId) : null;
+
+        if (selected == null)
+        {
+            // Placeholder — dim decorative text
+            ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
+            ctx.SetFontSize(11);
+            ctx.SetSourceRGBA(0.55, 0.48, 0.35, 0.25);
+            string ph = "Select a scroll to read.";
+            var te2 = ctx.TextExtents(ph);
+            ctx.MoveTo(detailX + (detailW - te2.Width) / 2, y + h * 0.48);
+            ctx.ShowText(ph);
+            return;
+        }
+
+        double px  = detailX + 18;
+        double pw  = detailW - 36;
+        double pcy = y + 16;
+
+        // Element accent bar
+        int selElemIdx = Array.IndexOf(elemOrder, selected.Element);
+        uint selClrPk  = selElemIdx >= 0 ? elemClr[selElemIdx] : 0xFF6b5c45;
+        double sr2 = ((selClrPk >> 16) & 0xFF) / 255.0;
+        double sg2 = ((selClrPk >> 8)  & 0xFF) / 255.0;
+        double sb2 = ((selClrPk)        & 0xFF) / 255.0;
+        ctx.SetSourceRGBA(sb2, sg2, sr2, 0.50);
+        ctx.Rectangle(detailX + 6, pcy, 2, 52); ctx.Fill();
+
+        // Title
+        ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Bold);
+        ctx.SetFontSize(14);
+        ctx.SetSourceRGBA(0.92, 0.86, 0.72, 0.95);
+        ctx.MoveTo(px, pcy + 14);
+        ctx.ShowText(selected.Title);
+        pcy += 20;
+
+        // Author
         ctx.SelectFontFace("Serif", FontSlant.Italic, FontWeight.Normal);
         ctx.SetFontSize(10);
-        var lr = new Random(12345);
-        double ty = y + 14;
-        while (ty < y + h - 12)
+        ctx.SetSourceRGBA(0.62, 0.54, 0.40, 0.70);
+        ctx.MoveTo(px, pcy + 10);
+        ctx.ShowText("— " + selected.Author);
+        pcy += 18;
+
+        // Divider
+        ctx.SetSourceRGBA(0.42, 0.34, 0.22, 0.35); ctx.LineWidth = 0.7;
+        ctx.MoveTo(px, pcy); ctx.LineTo(detailX + detailW - 14, pcy); ctx.Stroke();
+        pcy += 10;
+
+        // Body — clipped to detail panel
+        ctx.Rectangle(detailX, y, detailW, h); ctx.Clip();
+        ctx.SelectFontFace("Serif", FontSlant.Normal, FontWeight.Normal);
+        ctx.SetFontSize(10.5);
+        ctx.SetSourceRGBA(0.82, 0.76, 0.62, 0.85);
+        DrawWrappedLoreText(ctx, selected.Text, px, pcy, pw, 15.5);
+        ctx.ResetClip();
+    }
+
+    private static void DrawWrappedLoreText(Context ctx, string text, double x, double y, double maxW, double lineH)
+    {
+        double cy = y;
+        foreach (var para in text.Split('\n'))
         {
-            double tx = x + 12 + lr.NextDouble() * 22;
-            int wc = lr.Next(4, 11);
-            double la = 0.07 + lr.NextDouble() * 0.11;
-            for (int wi = 0; wi < wc && tx < x + w - 38; wi++)
+            if (string.IsNullOrEmpty(para)) { cy += lineH * 0.55; continue; }
+            string line = "";
+            foreach (var word in para.Split(' '))
             {
-                string word = frags[lr.Next(frags.Length)];
-                if (lr.Next(6) == 0) word += punct[lr.Next(punct.Length)];
-                ctx.SetSourceRGBA(0.88, 0.82, 0.65, la * (0.65 + lr.NextDouble() * 0.70));
-                var te = ctx.TextExtents(word);
-                ctx.MoveTo(tx - te.XBearing, ty - te.YBearing);
-                ctx.ShowText(word);
-                tx += te.Width + 4 + lr.NextDouble() * 9;
+                string test = line.Length == 0 ? word : line + " " + word;
+                if (ctx.TextExtents(test).Width > maxW && line.Length > 0)
+                {
+                    ctx.MoveTo(x, cy + lineH * 0.78); ctx.ShowText(line);
+                    cy += lineH; line = word;
+                }
+                else line = test;
             }
-            ty += 13 + lr.NextDouble() * 4;
+            if (line.Length > 0) { ctx.MoveTo(x, cy + lineH * 0.78); ctx.ShowText(line); cy += lineH; }
         }
     }
 

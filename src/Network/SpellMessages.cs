@@ -94,3 +94,9 @@ public class MsgCancelCast
     [ProtoMember(1)] public long EntityId { get; set; }
     [ProtoMember(2)] public string SpellId { get; set; } = "";
 }
+
+[ProtoContract]
+public class MsgReadScroll
+{
+    [ProtoMember(1)] public string ScrollId { get; set; } = "";
+}

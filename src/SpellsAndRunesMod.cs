@@ -74,6 +74,7 @@ public class SpellsAndRunesMod : ModSystem
         api.RegisterItemClass("SylphweedBong", typeof(Blocks.ItemSylphweedBong));
         api.RegisterItemClass("IgnisGemCore", typeof(Blocks.ItemIgnisGemCore));
         api.RegisterItemClass("IgnisPaste", typeof(Blocks.ItemIgnisPaste));
+        api.RegisterItemClass("Scroll", typeof(Items.ItemScroll));
         api.RegisterEntity("EntityWindSpear", typeof(Entities.EntityWindSpear));
         api.RegisterCollectibleBehaviorClass("ExtractGemCore", typeof(CollBehaviorExtractGemCore));
         SpellRegistry.RegisterAll();
@@ -105,6 +106,12 @@ public class SpellsAndRunesMod : ModSystem
             .RegisterMessageType<MsgPlayAnimation>()
             .RegisterMessageType<MsgCancelCast>()
             .RegisterMessageType<MsgChickenKills>()
+            .RegisterMessageType<MsgReadScroll>()
+            .SetMessageHandler<MsgReadScroll>((player, msg) =>
+            {
+                if (!string.IsNullOrEmpty(msg.ScrollId))
+                    PlayerSpellData.For(player.Entity).MarkScrollRead(msg.ScrollId);
+            })
             .SetMessageHandler<MsgUnlockSpell>((player, msg) =>
             {
                 var entity = player.Entity;
@@ -509,6 +516,7 @@ public class SpellsAndRunesMod : ModSystem
             .RegisterMessageType<MsgPlayAnimation>()
             .RegisterMessageType<MsgCancelCast>()
             .RegisterMessageType<MsgChickenKills>()
+            .RegisterMessageType<MsgReadScroll>()
             .SetMessageHandler<MsgPlayAnimation>(msg =>
             {
                 var entity = api.World.GetEntityById(msg.EntityId) as EntityAgent;
@@ -928,6 +936,9 @@ public class SpellsAndRunesMod : ModSystem
             e.Handled = true;
         };
     }
+
+    public void SendReadScroll(string scrollId)
+        => clientChannel?.SendPacket(new MsgReadScroll { ScrollId = scrollId });
 
     public override void Dispose()
     {

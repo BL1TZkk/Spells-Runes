@@ -1,0 +1,21 @@
+{
+	"code": "scroll-{type}",
+	"class": "Scroll",
+	"maxstacksize": 1,
+	"shape": { "base": "survival:item/lore/scroll" },
+	"variantgroups": [
+		{
+			"code": "type",
+			"states": [
+				"ashveil-1", "ashveil-2", "ashveil-3", "ashveil-4",
+				"fieldmanual-1", "fieldmanual-2",
+				"aldenmoor-1", "aldenmoor-2", "aldenmoor-3",
+				"voss-1", "voss-2", "voss-3", "voss-4"
+			]
+		}
+	],
+	"creativeinventory": {
+		"general": ["*"],
+		"items": ["*"]
+	}
+}

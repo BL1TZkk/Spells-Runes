@@ -2,7 +2,7 @@
 	"code": "scroll-{type}",
 	"class": "Scroll",
 	"maxstacksize": 1,
-	"renderType": "flat",
+	"shape": { "base": "spellsandrunes:item/scroll" },
 	"texture": { "base": "spellsandrunes:item/lore/scroll" },
 	"variantgroups": [
 		{

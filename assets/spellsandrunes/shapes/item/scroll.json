@@ -1,0 +1,72 @@
+{
+	"editor": {
+		"backDropShape": "",
+		"collapsedPaths": "",
+		"allAngles": false,
+		"entityTextureMode": false,
+		"singleTexture": false,
+		"vsFormatConverted": false
+	},
+	"textureWidth": 32,
+	"textureHeight": 32,
+	"textureSizes": {
+		"texture": [32, 32]
+	},
+	"textures": {
+		"texture": "item/lore/scroll"
+	},
+	"elements": [
+		{
+			"name": "bone",
+			"from": [8, 0, 2.25],
+			"to": [8, 0, 2.25],
+			"rotationOrigin": [8, 0, 2.25],
+			"children": [
+				{
+					"name": "tab",
+					"from": [-0.75, 0.25, -1.25],
+					"to": [0.75, 1.75, 12.75],
+					"rotationOrigin": [0, 0, 0],
+					"uv": [0, 0],
+					"shade": true,
+					"faces": {
+						"north": {"texture": "#texture", "uv": [8, 8, 10, 10], "autoUv": false, "snapUv": false},
+						"east": {"texture": "#texture", "uv": [0, 0, 14, 2], "autoUv": false, "snapUv": false},
+						"south": {"texture": "#texture", "uv": [8, 10, 10, 12], "autoUv": false, "snapUv": false},
+						"west": {"texture": "#texture", "uv": [0, 2, 14, 4], "autoUv": false, "snapUv": false},
+						"up": {"texture": "#texture", "uv": [2, 18, 0, 4], "autoUv": false, "snapUv": false},
+						"down": {"texture": "#texture", "uv": [4, 4, 2, 18], "autoUv": false, "snapUv": false}
+					},
+					"stepParentName": "",
+					"climateColorMap": "",
+					"gradientShade": false,
+					"renderPass": 0,
+					"seasonColorMap": ""
+				},
+				{
+					"name": "scroll",
+					"from": [-1, 0, -0.25],
+					"to": [1, 2, 11.75],
+					"rotationOrigin": [0, 0, 0.75],
+					"uv": [0, 0],
+					"shade": true,
+					"faces": {
+						"north": {"texture": "#texture", "uv": [10, 8, 12, 10], "autoUv": false, "snapUv": false},
+						"east": {"texture": "#texture", "uv": [4, 4, 16, 6], "autoUv": false, "snapUv": false},
+						"south": {"texture": "#texture", "uv": [10, 10, 12, 12], "autoUv": false, "snapUv": false},
+						"west": {"texture": "#texture", "uv": [4, 6, 16, 8], "autoUv": false, "snapUv": false},
+						"up": {"texture": "#texture", "uv": [6, 20, 4, 8], "autoUv": false, "snapUv": false},
+						"down": {"texture": "#texture", "uv": [8, 8, 6, 20], "autoUv": false, "snapUv": false}
+					},
+					"stepParentName": "",
+					"climateColorMap": "",
+					"gradientShade": false,
+					"renderPass": 0,
+					"seasonColorMap": ""
+				}
+			],
+			"stepParentName": ""
+		}
+	],
+	"animations": []
+}

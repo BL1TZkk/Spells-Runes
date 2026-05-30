@@ -2,8 +2,11 @@
 	"code": "scroll-{type}",
 	"class": "Scroll",
 	"maxstacksize": 1,
+	"renderType": "shape",
 	"shape": { "base": "spellsandrunes:item/scroll" },
-	"texture": { "base": "spellsandrunes:item/lore/scroll" },
+	"textures": {
+		"texture": { "base": "spellsandrunes:item/lore/scroll" }
+	},
 	"variantgroups": [
 		{
 			"code": "type",
@@ -15,6 +18,24 @@
 			]
 		}
 	],
+	"guiTransform": {
+		"translation": { "x": 0, "y": 0, "z": 0 },
+		"rotation": { "x": -20, "y": 135, "z": 0 },
+		"origin": { "x": 0.5, "y": 0.5, "z": 0.5 },
+		"scale": 3.2
+	},
+	"fpHandTransform": {
+		"translation": { "x": 0, "y": 0, "z": 0 },
+		"rotation": { "x": 0, "y": 90, "z": 0 },
+		"origin": { "x": 0.5, "y": 0.5, "z": 0.5 },
+		"scale": 1.0
+	},
+	"tpHandTransform": {
+		"translation": { "x": 0, "y": 0.3, "z": 0.5 },
+		"rotation": { "x": 0, "y": 90, "z": -90 },
+		"origin": { "x": 0, "y": 0, "z": 0 },
+		"scale": 1.0
+	},
 	"creativeinventory": {
 		"general": ["*"],
 		"items": ["*"]

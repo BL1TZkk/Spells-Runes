@@ -7,11 +7,11 @@
 	"textures": {
 		"texture": { "base": "spellsandrunes:item/lore/scroll" }
 	},
-	"texturesByType": {
-		"scroll-ashveil-*":     { "texture": { "base": "spellsandrunes:item/lore/scroll-ashveil" } },
-		"scroll-fieldmanual-*": { "texture": { "base": "spellsandrunes:item/lore/scroll-fieldmanual" } },
-		"scroll-aldenmoor-*":   { "texture": { "base": "spellsandrunes:item/lore/scroll-aldenmoor" } },
-		"scroll-voss-*":        { "texture": { "base": "spellsandrunes:item/lore/scroll-voss" } }
+	"byType": {
+		"*-ashveil-*":     { "textures": { "texture": { "base": "spellsandrunes:item/lore/scroll-ashveil" } } },
+		"*-fieldmanual-*": { "textures": { "texture": { "base": "spellsandrunes:item/lore/scroll-fieldmanual" } } },
+		"*-aldenmoor-*":   { "textures": { "texture": { "base": "spellsandrunes:item/lore/scroll-aldenmoor" } } },
+		"*-voss-*":        { "textures": { "texture": { "base": "spellsandrunes:item/lore/scroll-voss" } } }
 	},
 	"variantgroups": [
 		{

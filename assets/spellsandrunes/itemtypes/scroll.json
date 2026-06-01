@@ -7,6 +7,12 @@
 	"textures": {
 		"texture": { "base": "spellsandrunes:item/lore/scroll" }
 	},
+	"texturesByType": {
+		"scroll-ashveil-*":     { "texture": { "base": "spellsandrunes:item/lore/scroll-ashveil" } },
+		"scroll-fieldmanual-*": { "texture": { "base": "spellsandrunes:item/lore/scroll-fieldmanual" } },
+		"scroll-aldenmoor-*":   { "texture": { "base": "spellsandrunes:item/lore/scroll-aldenmoor" } },
+		"scroll-voss-*":        { "texture": { "base": "spellsandrunes:item/lore/scroll-voss" } }
+	},
 	"variantgroups": [
 		{
 			"code": "type",

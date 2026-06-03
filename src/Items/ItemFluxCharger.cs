@@ -77,6 +77,11 @@ public class ItemFluxCharger : Item
 
         flux.SetFluxAlignmentLevel(newLevel);
 
+        // Flux starts at 0, natural regen fills it during debuff
+        float maxFlux = flux.GetMaxFluxForLevel(newLevel);
+        byEntity.WatchedAttributes.SetFloat("spellsandrunes:flux", 0f);
+        byEntity.WatchedAttributes.MarkPathDirty("spellsandrunes:flux");
+
         // Debuffs for 30s
         byEntity.Stats.Set("walkspeed",          "fluxoverload", 0.40f, false);
         byEntity.Stats.Set("healingeffectivness", "fluxoverload", 0.00f, false);
@@ -89,6 +94,8 @@ public class ItemFluxCharger : Item
             byEntity.Stats.Remove("healingeffectivness",  "fluxoverload");
             byEntity.WatchedAttributes.SetFloat("intoxication", 0f);
             byEntity.WatchedAttributes.MarkPathDirty("intoxication");
+            byEntity.WatchedAttributes.SetFloat("spellsandrunes:flux", maxFlux);
+            byEntity.WatchedAttributes.MarkPathDirty("spellsandrunes:flux");
         }, DebuffMs);
 
         slot.TakeOut(1);

@@ -1,0 +1,13 @@
+{
+	"code": "flux-charger",
+	"class": "FluxCharger",
+	"maxstacksize": 1,
+	"renderType": "flat",
+	"texture": { "base": "spellsandrunes:item/flux-charger" },
+	"heldRightReadyAnimation": "drink",
+	"heldTpUseAnimation": "drink",
+	"creativeinventory": {
+		"general": ["*"],
+		"items": ["*"]
+	}
+}

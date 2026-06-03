@@ -85,6 +85,7 @@ public class SpellsAndRunesMod : ModSystem
         api.RegisterItemClass("IgnisGemCore", typeof(Blocks.ItemIgnisGemCore));
         api.RegisterItemClass("IgnisPaste", typeof(Blocks.ItemIgnisPaste));
         api.RegisterItemClass("Scroll", typeof(Items.ItemScroll));
+        api.RegisterItemClass("FluxCharger", typeof(Items.ItemFluxCharger));
         api.RegisterEntity("EntityWindSpear", typeof(Entities.EntityWindSpear));
         api.RegisterEntity("EntityFireMine", typeof(Entities.EntityFireMine));
         api.RegisterCollectibleBehaviorClass("ExtractGemCore", typeof(CollBehaviorExtractGemCore));

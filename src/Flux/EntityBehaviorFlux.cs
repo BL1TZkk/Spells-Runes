@@ -18,7 +18,7 @@ public class EntityBehaviorFlux : EntityBehavior
     public const string FluxAlignmentLevel4Activator = "fluxalignment_4";
 
     private const int DefaultAlignmentLevel = 1;
-    private const int MaxAlignmentLevel = 4;
+    public const int MaxAlignmentLevel = 4;
     private const float Level1MaxFlux = 100f;
     private const float Level2MaxFlux = 150f;
     private const float Level3MaxFlux = 200f;

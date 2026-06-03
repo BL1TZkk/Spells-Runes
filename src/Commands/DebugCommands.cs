@@ -164,8 +164,11 @@ public static class DebugCommands
 
         var activators = entity.WatchedAttributes.GetOrAddTreeAttribute("snr:activators");
         if (level >= 2) activators.SetInt(EntityBehaviorFlux.FluxAlignmentLevel2Activator, 1);
+        else activators.RemoveAttribute(EntityBehaviorFlux.FluxAlignmentLevel2Activator);
         if (level >= 3) activators.SetInt(EntityBehaviorFlux.FluxAlignmentLevel3Activator, 1);
+        else activators.RemoveAttribute(EntityBehaviorFlux.FluxAlignmentLevel3Activator);
         if (level >= 4) activators.SetInt(EntityBehaviorFlux.FluxAlignmentLevel4Activator, 1);
+        else activators.RemoveAttribute(EntityBehaviorFlux.FluxAlignmentLevel4Activator);
         entity.WatchedAttributes.MarkPathDirty("snr:activators");
 
         int applied = behavior.SetFluxAlignmentLevel(level);

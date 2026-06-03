@@ -10,7 +10,8 @@ namespace SpellsAndRunes.Items;
 
 public class ItemFluxCharger : Item
 {
-    private const float UseDuration = 4f;
+    private const float UseDuration  = 6f;
+    private const float CrazyStart  = 4f;   // crazy effects begin here
     private const int   DebuffMs    = 30_000;
 
     public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity,
@@ -35,24 +36,29 @@ public class ItemFluxCharger : Item
     public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot,
         EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
     {
-        float progress = secondsUsed / UseDuration;
+        // Crazy effects only in the last 2 seconds (4s–6s)
+        float crazyP = secondsUsed < CrazyStart
+            ? 0f
+            : (secondsUsed - CrazyStart) / (UseDuration - CrazyStart);
 
-        if (byEntity.World.Side == EnumAppSide.Client)
+        if (byEntity.World.Side == EnumAppSide.Client && crazyP > 0f)
         {
-            SpawnOrbitRings(byEntity, secondsUsed, progress);
-            SpawnGroundFracture(byEntity, progress);
-            SpawnEnergyInflow(byEntity, secondsUsed, progress);
-            SpawnSphereShell(byEntity, secondsUsed, progress);
-            SpawnLightningFlicker(byEntity, secondsUsed, progress);
-            SpawnDarkVoidRing(byEntity, secondsUsed, progress);
+            float t = secondsUsed - CrazyStart; // local time within crazy phase
+            SpawnOrbitRings(byEntity, t, crazyP);
+            SpawnGroundFracture(byEntity, crazyP);
+            SpawnEnergyInflow(byEntity, t, crazyP);
+            SpawnSphereShell(byEntity, t, crazyP);
+            SpawnLightningFlicker(byEntity, t, crazyP);
+            SpawnDarkVoidRing(byEntity, t, crazyP);
 
-            // Levitate client-side — player physics runs here
-            byEntity.Pos.Motion.Y = 0.018f + progress * 0.035f;
+            // Levitate during crazy phase
+            byEntity.Pos.Motion.Y = 0.018f + crazyP * 0.035f;
 
-            if (secondsUsed > 2f && secondsUsed < 2.1f)
+            // Sound cue at start of crazy phase
+            if (secondsUsed > CrazyStart && secondsUsed < CrazyStart + 0.1f)
                 byEntity.World.PlaySoundAt(
                     new AssetLocation("game:sounds/effect/deepbreath"),
-                    byEntity, null, false, 16f, 0.5f);
+                    byEntity, null, false, 16f, 0.7f);
         }
 
         return secondsUsed < UseDuration;

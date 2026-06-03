@@ -127,6 +127,13 @@ public static class DebugCommands
                 .WithDescription("Clear all unlocked lore/journal entries for yourself")
                 .RequiresPrivilege(Privilege.controlserver)
                 .HandleWith(OnClearLore)
+            .EndSubCommand()
+
+            // /snr fluxcharger
+            .BeginSubCommand("fluxcharger")
+                .WithDescription("Give yourself a Flux Charger item")
+                .RequiresPrivilege(Privilege.controlserver)
+                .HandleWith(OnGiveFluxCharger)
             .EndSubCommand();
     }
 
@@ -362,6 +369,23 @@ public static class DebugCommands
 
         PlayerSpellData.For(entity).ClearLoreEntries();
         return TextCommandResult.Success("All lore/journal entries cleared.");
+    }
+
+    private static TextCommandResult OnGiveFluxCharger(TextCommandCallingArgs args)
+    {
+        if (sapi == null) return TextCommandResult.Error("Server API not initialized.");
+        if (args.Caller.Entity is not { } entity)
+            return TextCommandResult.Error("No player entity found.");
+
+        var item = sapi.World.GetItem(new AssetLocation("spellsandrunes:flux-charger"));
+        if (item == null)
+            return TextCommandResult.Error("Item spellsandrunes:flux-charger not found.");
+
+        var stack = new ItemStack(item, 1);
+        if (!entity.TryGiveItemStack(stack))
+            entity.World.SpawnItemEntity(stack, entity.Pos.XYZ);
+
+        return TextCommandResult.Success("Gave 1x Flux Charger.");
     }
 
     private static int TryParsePositiveInt(string? raw, int fallback)

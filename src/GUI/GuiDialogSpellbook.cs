@@ -83,6 +83,11 @@ public class GuiDialogSpellbook : GuiDialog
     // ── Wheel element filter (-1 = All) ───────────────────────────────────────
     private int _wheelElemFilter = -1;
 
+    // ── Double-click tracking ─────────────────────────────────────────────────
+    private string? _lastClickId  = null;
+    private long    _lastClickMs  = 0;
+    private const long DoubleClickMs = 350;
+
     // ── Animation & screen coords ─────────────────────────────────────────────
     private double _t = 0;
     private long   _tickId;
@@ -1200,15 +1205,19 @@ public class GuiDialogSpellbook : GuiDialog
                 _wheelActive = _wheelActive == i ? -1 : i;
                 Redraw(); e.Handled = true; return;
             }
-            // Card click: assign to active slot if one is selected, otherwise start drag
+            // Card click: assign to active slot if one is selected, double-click opens picker, otherwise start drag
             foreach (var (id, cx, cy, cw, ch) in _cardR)
             {
                 if (!InRect(cx, cy, cw, ch, lx, ly)) continue;
                 if (_wheelActive >= 0)
                 {
                     _ch.SendPacket(new MsgSetHotbarSlot { Slot = _wheelActive, SpellId = id });
-                    _wheelActive = -1; Redraw(); e.Handled = true; return;
+                    _wheelActive = -1; _lastClickId = null; Redraw(); e.Handled = true; return;
                 }
+                long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                bool isDouble = id == _lastClickId && (now - _lastClickMs) <= DoubleClickMs;
+                _lastClickId = id; _lastClickMs = now;
+                if (isDouble) { _pendingWheelAdd = id; Redraw(); e.Handled = true; return; }
                 _dragStartX = lx; _dragStartY = ly; _dragStarted = true;
                 break;
             }
@@ -1264,10 +1273,18 @@ public class GuiDialogSpellbook : GuiDialog
             if (!_panMoved && _mainTab == 0)
             {
                 bool hit = false;
+                long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 foreach (var (id, nx, ny, nw, nh) in _nodeR)
-                    if (InRect(nx, ny, nw, nh, lx, ly))
-                    { _selId[_elemTab] = _selId[_elemTab] == id ? null : id; hit = true; break; }
-                if (!hit) _selId[_elemTab] = null;
+                {
+                    if (!InRect(nx, ny, nw, nh, lx, ly)) continue;
+                    bool isDouble = id == _lastClickId && (now - _lastClickMs) <= DoubleClickMs;
+                    _lastClickId = id; _lastClickMs = now;
+                    if (isDouble && SpellRegistry.Get(id) is { } sp && _selId[_elemTab] == id)
+                    { _pendingWheelAdd = id; Redraw(); e.Handled = true; return; }
+                    _selId[_elemTab] = _selId[_elemTab] == id ? null : id;
+                    hit = true; break;
+                }
+                if (!hit) { _selId[_elemTab] = null; _lastClickId = null; }
                 Redraw();
             }
             e.Handled = true;

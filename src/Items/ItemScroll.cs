@@ -16,7 +16,7 @@ public class ItemScroll : Item
         get
         {
             var path = Code?.Path ?? "";
-            path = path.Replace("scroll-", "");
+            path = path.Replace("scroll-", "").Replace("{type}-", "");
             return path;
         }
     }

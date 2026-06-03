@@ -9,7 +9,7 @@
     <RootNamespace>SpellsAndRunes</RootNamespace>
     <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
     <OutputPath>bin\$(Configuration)\</OutputPath>
-    <VintageStoryInstall>C:\Games\Vintagestory</VintageStoryInstall>
+    <VintageStoryInstall>E:\Games\Vintagestory</VintageStoryInstall>
   </PropertyGroup>
 
   <ItemGroup>

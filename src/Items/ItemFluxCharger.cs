@@ -44,6 +44,7 @@ public class ItemFluxCharger : Item
         {
             SpawnOrbitRings(byEntity, secondsUsed, progress);
             SpawnEnergyStreaks(byEntity, progress);
+            SpawnSphereShell(byEntity, secondsUsed, progress);
 
             // Mid-point pulse sound
             if (secondsUsed > 2f && secondsUsed < 2.08f)
@@ -54,9 +55,8 @@ public class ItemFluxCharger : Item
 
         if (byEntity.World.Side == EnumAppSide.Server)
         {
-            // Levitate — counteract gravity + gentle upward push
-            float lift = 0.03f + progress * 0.025f;
-            byEntity.Pos.Motion.Y = Math.Min(byEntity.Pos.Motion.Y + lift, 0.08f);
+            // Override motion.Y each tick — overwrites gravity, produces steady lift
+            byEntity.Pos.Motion.Y = 0.02f + progress * 0.04f;
         }
 
         return secondsUsed < UseDuration;
@@ -186,6 +186,43 @@ public class ItemFluxCharger : Item
                 new Vec3f(vx, vy, vz), new Vec3f(vx, vy, vz),
                 0.15f + progress * 0.15f, -0.05f,
                 0.04f + progress * 0.04f);
+        }
+    }
+
+    // Sphere shell that forms around the player in the second half
+    private static void SpawnSphereShell(EntityAgent entity, float t, float progress)
+    {
+        if (progress < 0.4f) return;
+        float shellP = (progress - 0.4f) / 0.6f; // 0→1 over last 60% of duration
+
+        var pos = entity.Pos;
+        float radius  = 1.4f + MathF.Sin(t * 5f) * 0.12f; // pulsating
+        int   N       = (int)(shellP * 18) + 2;
+        float goldenA = MathF.PI * (3f - MathF.Sqrt(5f));
+        int   offset  = (int)(t * 30); // slowly rotates sampling offset
+
+        for (int i = 0; i < N; i++)
+        {
+            float fy     = 1f - ((i + offset) % 40) / 19.5f;
+            float fr     = MathF.Sqrt(Math.Max(0f, 1f - fy * fy));
+            float theta  = goldenA * (i + offset);
+            float fx     = MathF.Cos(theta) * fr;
+            float fz     = MathF.Sin(theta) * fr;
+
+            // Slight inward drift so they look like they're converging
+            float vx = -fx * 0.15f, vy = -fy * 0.08f, vz = -fz * 0.15f;
+
+            int al = (int)(100 + shellP * 155);
+            int r  = (int)(120 + shellP * 80);
+            int g  = (int)(60  + shellP * 60);
+            int color = (al << 24) | (r << 16) | (g << 8) | 255;
+
+            entity.World.SpawnParticles(1, color,
+                new Vec3d(pos.X + fx * radius, pos.Y + 1.0 + fy * radius, pos.Z + fz * radius),
+                new Vec3d(pos.X + fx * radius, pos.Y + 1.0 + fy * radius, pos.Z + fz * radius),
+                new Vec3f(vx, vy, vz), new Vec3f(vx, vy, vz),
+                0.15f + shellP * 0.25f, 0f,
+                0.04f + shellP * 0.05f);
         }
     }
 

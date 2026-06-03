@@ -1274,14 +1274,22 @@ public class GuiDialogSpellbook : GuiDialog
             {
                 bool hit = false;
                 long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                var entity2 = capi.World.Player?.Entity;
+                var data2   = entity2 != null ? PlayerSpellData.For(entity2) : null;
                 foreach (var (id, nx, ny, nw, nh) in _nodeR)
                 {
                     if (!InRect(nx, ny, nw, nh, lx, ly)) continue;
                     bool isDouble = id == _lastClickId && (now - _lastClickMs) <= DoubleClickMs;
                     _lastClickId = id; _lastClickMs = now;
-                    if (isDouble && SpellRegistry.Get(id) is { } sp && _selId[_elemTab] == id)
-                    { _pendingWheelAdd = id; Redraw(); e.Handled = true; return; }
-                    _selId[_elemTab] = _selId[_elemTab] == id ? null : id;
+                    _selId[_elemTab] = id; // always select, deselect only by clicking outside
+                    if (isDouble)
+                    {
+                        if (data2?.IsUnlocked(id) == true)
+                            _pendingWheelAdd = id;
+                        else if (data2 != null && SpellTree.CanUnlock(id, data2) && SpellTree.CanAffordUnlock(id, data2))
+                            _ch.SendPacket(new MsgUnlockSpell { SpellId = id });
+                        Redraw(); e.Handled = true; return;
+                    }
                     hit = true; break;
                 }
                 if (!hit) { _selId[_elemTab] = null; _lastClickId = null; }

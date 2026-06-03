@@ -14,7 +14,7 @@ public class HudRadialMenu : GuiDialog
 {
     private bool isOpen       = false;
     private int  hoveredSlot  = -1;
-    private int  selectedSlot = 0;
+    private int  selectedSlot = -1;
 
     private const double OrbitR      = 115;
     private const double SlotR       = 42;

@@ -19,18 +19,20 @@ public class ItemFluxCharger : Item
     {
         if (!firstEvent) return;
 
-        var data = PlayerSpellData.For(byEntity);
-        if (data == null || !data.IsFluxUnlocked) return;
-
-        var flux = byEntity.GetBehavior<EntityBehaviorFlux>();
-        if (flux == null || flux.GetFluxAlignmentLevel() >= EntityBehaviorFlux.MaxAlignmentLevel) return;
-
         handling = EnumHandHandling.PreventDefault;
 
+        var data = PlayerSpellData.For(byEntity);
+        var flux = byEntity.GetBehavior<EntityBehaviorFlux>();
+
         if (byEntity.World.Side == EnumAppSide.Client)
+        {
+            if (data == null || !data.IsFluxUnlocked) return;
+            if (flux == null || flux.GetFluxAlignmentLevel() >= EntityBehaviorFlux.MaxAlignmentLevel) return;
+
             byEntity.World.PlaySoundAt(
                 new AssetLocation("game:sounds/effect/deepbreath"),
                 byEntity, null, false, 16f, 0.5f);
+        }
     }
 
     public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot,

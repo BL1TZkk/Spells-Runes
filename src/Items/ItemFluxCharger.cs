@@ -11,8 +11,10 @@ namespace SpellsAndRunes.Items;
 public class ItemFluxCharger : Item
 {
     private const float UseDuration = 8f;
-    private const float CrazyStart  = 5f;  // crazy phase begins here
+    private const float CrazyStart  = 5f;
     private const int   DebuffMs    = 30_000;
+
+    internal const string AttrDebuffEnd = "snr:fluxoverload_end";
 
     public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity,
         BlockSelection blockSel, EntitySelection entitySel, bool firstEvent,
@@ -37,14 +39,6 @@ public class ItemFluxCharger : Item
     {
         if (byEntity.World.Side == EnumAppSide.Client)
         {
-            // Quiet anticipation pulse — subtle glow near player in the last second before crazy
-            if (secondsUsed > CrazyStart - 1f && secondsUsed < CrazyStart)
-            {
-                float anticipation = (secondsUsed - (CrazyStart - 1f));
-                SpawnAnticipatePulse(byEntity, secondsUsed, anticipation);
-            }
-
-            // Crazy phase
             float crazyP = secondsUsed < CrazyStart
                 ? 0f
                 : (secondsUsed - CrazyStart) / (UseDuration - CrazyStart);
@@ -53,12 +47,9 @@ public class ItemFluxCharger : Item
             {
                 float t = secondsUsed - CrazyStart;
                 SpawnOrbitRings(byEntity, t, crazyP);
-                SpawnEnergyInflow(byEntity, t, crazyP);
                 SpawnSphereShell(byEntity, t, crazyP);
-
                 byEntity.Pos.Motion.Y = 0.018f + crazyP * 0.035f;
 
-                // Sound cue at start of crazy phase
                 if (secondsUsed > CrazyStart && secondsUsed < CrazyStart + 0.1f)
                     byEntity.World.PlaySoundAt(
                         new AssetLocation("game:sounds/effect/deepbreath"),
@@ -105,130 +96,84 @@ public class ItemFluxCharger : Item
         byEntity.WatchedAttributes.SetFloat("spellsandrunes:flux", 0f);
         byEntity.WatchedAttributes.MarkPathDirty("spellsandrunes:flux");
 
-        byEntity.Stats.Set("walkspeed",          "fluxoverload", 0.40f, false);
-        byEntity.Stats.Set("healingeffectivness", "fluxoverload", 0.00f, false);
-        byEntity.WatchedAttributes.SetFloat("intoxication", 0.9f);
-        byEntity.WatchedAttributes.MarkPathDirty("intoxication");
-
-        byEntity.World.RegisterCallback(_ =>
-        {
-            byEntity.Stats.Remove("walkspeed",           "fluxoverload");
-            byEntity.Stats.Remove("healingeffectivness",  "fluxoverload");
-            byEntity.WatchedAttributes.SetFloat("intoxication", 0f);
-            byEntity.WatchedAttributes.MarkPathDirty("intoxication");
-            byEntity.WatchedAttributes.SetFloat("spellsandrunes:flux", maxFlux);
-            byEntity.WatchedAttributes.MarkPathDirty("spellsandrunes:flux");
-        }, DebuffMs);
+        ApplyDebuff(byEntity, maxFlux, DebuffMs);
 
         slot.TakeOut(1);
         slot.MarkDirty();
     }
 
-    // ── Charging effects ─────────────────────────────────────────────────────
-
-    // Subtle close-range pulse during the last second of quiet phase
-    private static void SpawnAnticipatePulse(EntityAgent entity, float t, float localP)
+    // Called from SpellsAndRunesMod on player join to handle reconnect
+    internal static void ApplyDebuff(EntityAgent entity, float maxFlux, int durationMs)
     {
-        var   pos  = entity.Pos;
-        var   rng  = entity.World.Rand;
-        float beat = 0.5f + 0.5f * MathF.Sin(t * MathF.PI * 4f); // 2 Hz pulse
+        long endTime = entity.World.ElapsedMilliseconds + durationMs;
+        entity.WatchedAttributes.SetLong(AttrDebuffEnd, endTime);
+        entity.WatchedAttributes.SetFloat("snr:fluxoverload_maxflux", maxFlux);
+        entity.WatchedAttributes.MarkPathDirty(AttrDebuffEnd);
 
-        int count = (int)(beat * 4);
-        for (int i = 0; i < count; i++)
-        {
-            double angle  = rng.NextDouble() * Math.PI * 2;
-            double radius = rng.NextDouble() * 0.5 + 0.2;
-            float  vy     = (float)(rng.NextDouble() * 0.3 + 0.1);
-            int    al     = (int)(40 + localP * beat * 100);
-            int    color  = (al << 24) | (60 << 16) | (100 << 8) | 220;
+        entity.Stats.Set("walkspeed",          "fluxoverload", 0.40f, false);
+        entity.Stats.Set("healingeffectivness", "fluxoverload", 0.00f, false);
+        entity.WatchedAttributes.SetFloat("intoxication", 0.9f);
+        entity.WatchedAttributes.MarkPathDirty("intoxication");
 
-            entity.World.SpawnParticles(1, color,
-                new Vec3d(pos.X + Math.Cos(angle) * radius, pos.Y + 1.0, pos.Z + Math.Sin(angle) * radius),
-                new Vec3d(pos.X + Math.Cos(angle) * radius, pos.Y + 1.0, pos.Z + Math.Sin(angle) * radius),
-                new Vec3f(0, vy, 0), new Vec3f(0, vy, 0),
-                0.3f, -0.02f, 0.04f);
-        }
+        entity.World.RegisterCallback(_ => RemoveDebuff(entity), durationMs);
     }
 
-    // 2 contra-rotating rings — electric blue + soft violet/white
+    internal static void RemoveDebuff(EntityAgent entity)
+    {
+        entity.Stats.Remove("walkspeed",           "fluxoverload");
+        entity.Stats.Remove("healingeffectivness",  "fluxoverload");
+        entity.WatchedAttributes.SetFloat("intoxication", 0f);
+        entity.WatchedAttributes.MarkPathDirty("intoxication");
+
+        float maxFlux = entity.WatchedAttributes.GetFloat("snr:fluxoverload_maxflux", 0f);
+        if (maxFlux > 0f)
+        {
+            entity.WatchedAttributes.SetFloat("spellsandrunes:flux", maxFlux);
+            entity.WatchedAttributes.MarkPathDirty("spellsandrunes:flux");
+        }
+
+        entity.WatchedAttributes.RemoveAttribute(AttrDebuffEnd);
+        entity.WatchedAttributes.RemoveAttribute("snr:fluxoverload_maxflux");
+        entity.WatchedAttributes.MarkPathDirty(AttrDebuffEnd);
+    }
+
+    // ── Effects ──────────────────────────────────────────────────────────────
+
     private static void SpawnOrbitRings(EntityAgent entity, float t, float progress)
     {
         var pos = entity.Pos;
         for (int ring = 0; ring < 2; ring++)
         {
-            float ringRadius = 0.85f + ring * 0.40f;
-            float ringHeight = 0.75f + ring * 0.65f;
-            float rotDir     = ring == 0 ? 1f : -1f;
-            float speed      = 2.2f + progress * 2.8f;
-            float baseAngle  = t * speed * rotDir;
-            int   pCount     = 5 + (int)(progress * 5);
+            float radius    = 0.85f + ring * 0.42f;
+            float height    = 0.75f + ring * 0.65f;
+            float rotDir    = ring == 0 ? 1f : -1f;
+            float speed     = 2.2f + progress * 2.8f;
+            float baseAngle = t * speed * rotDir;
+            int   pCount    = 5 + (int)(progress * 5);
 
             for (int i = 0; i < pCount; i++)
             {
                 float a  = baseAngle + i * (MathF.PI * 2f / pCount);
-                float px = (float)(pos.X + Math.Cos(a) * ringRadius);
-                float pz = (float)(pos.Z + Math.Sin(a) * ringRadius);
-                float py = (float)(pos.Y + ringHeight + Math.Sin(t * 3.5f + i) * 0.10f);
-
+                float px = (float)(pos.X + Math.Cos(a) * radius);
+                float pz = (float)(pos.Z + Math.Sin(a) * radius);
+                float py = (float)(pos.Y + height + Math.Sin(t * 3.5f + i) * 0.10f);
                 float vx = -MathF.Sin(a) * rotDir * (1.6f + progress * 2f);
                 float vz =  MathF.Cos(a) * rotDir * (1.6f + progress * 2f);
-                float vy =  0.06f + progress * 0.10f;
 
                 int r, g, b, al;
-                if (ring == 0)
-                {   // electric blue
-                    r = (int)(30  + progress * 50);
-                    g = (int)(100 + progress * 100);
-                    b = 255;
-                    al = (int)(150 + progress * 105);
-                }
-                else
-                {   // soft violet-white
-                    r = (int)(160 + progress * 95);
-                    g = (int)(100 + progress * 120);
-                    b = 255;
-                    al = (int)(130 + progress * 110);
-                }
+                if (ring == 0) { r = (int)(30+progress*50); g = (int)(100+progress*100); b = 255; al = (int)(150+progress*105); }
+                else           { r = (int)(160+progress*95); g = (int)(100+progress*120); b = 255; al = (int)(130+progress*110); }
 
-                int color = (al << 24) | (r << 16) | (g << 8) | b;
-                entity.World.SpawnParticles(1, color,
+                entity.World.SpawnParticles(1, (al<<24)|(r<<16)|(g<<8)|b,
                     new Vec3d(px, py, pz), new Vec3d(px, py, pz),
-                    new Vec3f(vx, vy, vz), new Vec3f(vx, vy, vz),
+                    new Vec3f(vx, 0.06f + progress * 0.10f, vz),
+                    new Vec3f(vx, 0.06f + progress * 0.10f, vz),
                     0.22f + progress * 0.22f, -0.01f,
                     0.055f + progress * 0.065f);
             }
         }
     }
 
-    // Cyan-white streaks flowing inward from surroundings
-    private static void SpawnEnergyInflow(EntityAgent entity, float t, float progress)
-    {
-        if (progress < 0.2f) return;
-        var pos  = entity.Pos;
-        var rng  = entity.World.Rand;
-        int count = 2 + (int)(progress * 5);
-
-        for (int i = 0; i < count; i++)
-        {
-            double angle = rng.NextDouble() * Math.PI * 2;
-            double dist  = rng.NextDouble() * 3.0 + 1.5;
-            double h     = rng.NextDouble() * 1.0;
-            float  spd   = 2.5f + progress * 3f;
-            float  vx    = (float)(-Math.Cos(angle) * spd);
-            float  vz    = (float)(-Math.Sin(angle) * spd);
-            int    al    = (int)(60 + progress * 140);
-            int    color = (al << 24) | (180 << 16) | (230 << 8) | 255;
-
-            entity.World.SpawnParticles(1, color,
-                new Vec3d(pos.X + Math.Cos(angle) * dist, pos.Y + h, pos.Z + Math.Sin(angle) * dist),
-                new Vec3d(pos.X + Math.Cos(angle) * dist, pos.Y + h, pos.Z + Math.Sin(angle) * dist),
-                new Vec3f(vx, 0.6f + progress * 0.8f, vz), new Vec3f(vx, 0.6f + progress * 0.8f, vz),
-                0.12f + progress * 0.12f, -0.03f,
-                0.035f + progress * 0.03f);
-        }
-    }
-
-    // Sphere shell building around the player
     private static void SpawnSphereShell(EntityAgent entity, float t, float progress)
     {
         if (progress < 0.3f) return;
@@ -246,78 +191,59 @@ public class ItemFluxCharger : Item
             float theta = goldenA * (i + offset);
             float fx    = MathF.Cos(theta) * fr;
             float fz    = MathF.Sin(theta) * fr;
-            float vx    = -fx * 0.10f, vy = -fy * 0.05f, vz = -fz * 0.10f;
+            int   al    = (int)(80  + shellP * 175);
+            int   r     = (int)(80  + shellP * 170);
+            int   g     = (int)(120 + shellP * 130);
 
-            // Blue-white, brightening with progress
-            int al = (int)(80  + shellP * 175);
-            int r  = (int)(80  + shellP * 170);
-            int g  = (int)(120 + shellP * 130);
-            int color = (al << 24) | (r << 16) | (g << 8) | 255;
-
-            entity.World.SpawnParticles(1, color,
+            entity.World.SpawnParticles(1, (al<<24)|(r<<16)|(g<<8)|255,
                 new Vec3d(pos.X + fx * radius, pos.Y + 1.0 + fy * radius, pos.Z + fz * radius),
                 new Vec3d(pos.X + fx * radius, pos.Y + 1.0 + fy * radius, pos.Z + fz * radius),
-                new Vec3f(vx, vy, vz), new Vec3f(vx, vy, vz),
-                0.18f + shellP * 0.28f, 0f,
-                0.04f + shellP * 0.055f);
+                new Vec3f(-fx * 0.10f, -fy * 0.05f, -fz * 0.10f),
+                new Vec3f(-fx * 0.10f, -fy * 0.05f, -fz * 0.10f),
+                0.18f + shellP * 0.28f, 0f, 0.04f + shellP * 0.055f);
         }
     }
 
-    // ── Completion effects ────────────────────────────────────────────────────
-
-    // Clean sphere burst — white core fading to blue
     private static void SpawnSphereBurst(EntityAgent entity)
     {
-        var   pos         = entity.Pos;
-        var   rng         = entity.World.Rand;
-        const int N       = 120;
-        float goldenAngle = MathF.PI * (3f - MathF.Sqrt(5f));
+        var   pos   = entity.Pos;
+        var   rng   = entity.World.Rand;
+        const int N = 120;
+        float ga    = MathF.PI * (3f - MathF.Sqrt(5f));
 
         for (int i = 0; i < N; i++)
         {
             float y   = 1f - (i / (float)(N - 1)) * 2f;
             float r   = MathF.Sqrt(1f - y * y);
-            float th  = goldenAngle * i;
+            float th  = ga * i;
             float x   = MathF.Cos(th) * r;
             float z   = MathF.Sin(th) * r;
             float spd = 3.2f + (float)(rng.NextDouble() * 2.2);
-
-            // White → blue gradient from center outward
             float t   = (float)i / N;
             int   cr  = (int)(255 - t * 180);
             int   cg  = (int)(255 - t * 130);
-            int   color = (245 << 24) | (cr << 16) | (cg << 8) | 255;
 
-            entity.World.SpawnParticles(1, color,
-                new Vec3d(pos.X, pos.Y + 1.0, pos.Z),
-                new Vec3d(pos.X, pos.Y + 1.0, pos.Z),
-                new Vec3f(x * spd, y * spd + 0.4f, z * spd),
-                new Vec3f(x * spd, y * spd + 0.4f, z * spd),
+            entity.World.SpawnParticles(1, (245<<24)|(cr<<16)|(cg<<8)|255,
+                new Vec3d(pos.X, pos.Y + 1.0, pos.Z), new Vec3d(pos.X, pos.Y + 1.0, pos.Z),
+                new Vec3f(x*spd, y*spd + 0.4f, z*spd), new Vec3f(x*spd, y*spd + 0.4f, z*spd),
                 0.65f + (float)(rng.NextDouble() * 0.45), -0.07f,
                 0.09f + (float)(rng.NextDouble() * 0.10));
         }
     }
 
-    // Single clean ground ring
     private static void SpawnGroundRing(EntityAgent entity)
     {
         var pos = entity.Pos;
-        const int N = 52;
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < 52; i++)
         {
-            float a     = i * (MathF.PI * 2f / N);
-            float spd   = 4.5f;
-            float vx    = MathF.Cos(a) * spd;
-            float vz    = MathF.Sin(a) * spd;
-            float t     = (float)i / N;
-            int   cr    = (int)(60  + t * 100);
-            int   cg    = (int)(140 + t * 90);
-            int   color = (215 << 24) | (cr << 16) | (cg << 8) | 255;
-
-            entity.World.SpawnParticles(1, color,
-                new Vec3d(pos.X, pos.Y + 0.04, pos.Z),
-                new Vec3d(pos.X, pos.Y + 0.04, pos.Z),
-                new Vec3f(vx, 0.12f, vz), new Vec3f(vx, 0.12f, vz),
+            float a   = i * (MathF.PI * 2f / 52);
+            float t   = (float)i / 52;
+            int   cr  = (int)(60  + t * 100);
+            int   cg  = (int)(140 + t * 90);
+            entity.World.SpawnParticles(1, (215<<24)|(cr<<16)|(cg<<8)|255,
+                new Vec3d(pos.X, pos.Y + 0.04, pos.Z), new Vec3d(pos.X, pos.Y + 0.04, pos.Z),
+                new Vec3f(MathF.Cos(a)*4.5f, 0.12f, MathF.Sin(a)*4.5f),
+                new Vec3f(MathF.Cos(a)*4.5f, 0.12f, MathF.Sin(a)*4.5f),
                 0.55f, 0f, 0.08f);
         }
     }

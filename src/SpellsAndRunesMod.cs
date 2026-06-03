@@ -528,6 +528,23 @@ public class SpellsAndRunesMod : ModSystem
         {
             if (player is IServerPlayer sp)
                 SendChickenKills(sp);
+
+            // Restore or clear FluxCharger debuff after reconnect
+            if (player.Entity is { } joinEntity)
+            {
+                long endTime = joinEntity.WatchedAttributes.GetLong(Items.ItemFluxCharger.AttrDebuffEnd, 0);
+                if (endTime > 0)
+                {
+                    long remaining = endTime - api.World.ElapsedMilliseconds;
+                    if (remaining <= 0)
+                        Items.ItemFluxCharger.RemoveDebuff(joinEntity);
+                    else
+                    {
+                        float maxFlux = joinEntity.WatchedAttributes.GetFloat("snr:fluxoverload_maxflux", 0f);
+                        Items.ItemFluxCharger.ApplyDebuff(joinEntity, maxFlux, (int)remaining);
+                    }
+                }
+            }
         };
 
         api.Event.RegisterGameTickListener(dt => TickChannelSpells(api, dt), 100);

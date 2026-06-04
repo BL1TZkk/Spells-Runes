@@ -6006,7 +6006,7 @@
     "value": {
       "name": "Alignment_amplifier",
       "code": "alignment_amplifier",
-      "quantityframes": 120,
+      "quantityframes": 121,
       "onActivityStopped": "EaseOut",
       "onAnimationEnd": "Hold",
       "keyframes": [

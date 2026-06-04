@@ -131,9 +131,16 @@ public static class DebugCommands
 
             // /snr fluxcharger
             .BeginSubCommand("fluxcharger")
-                .WithDescription("Give yourself a Flux Charger item")
+                .WithDescription("Give yourself an Alignment Amplifier item")
                 .RequiresPrivilege(Privilege.controlserver)
                 .HandleWith(OnGiveFluxCharger)
+            .EndSubCommand()
+
+            // /snr cleardebuff
+            .BeginSubCommand("cleardebuff")
+                .WithDescription("Clear all FluxCharger debuffs immediately")
+                .RequiresPrivilege(Privilege.controlserver)
+                .HandleWith(OnClearDebuff)
             .EndSubCommand();
     }
 
@@ -372,6 +379,15 @@ public static class DebugCommands
 
         PlayerSpellData.For(entity).ClearLoreEntries();
         return TextCommandResult.Success("All lore/journal entries cleared.");
+    }
+
+    private static TextCommandResult OnClearDebuff(TextCommandCallingArgs args)
+    {
+        if (args.Caller.Entity is not { } entity)
+            return TextCommandResult.Error("No player entity found.");
+
+        Items.ItemFluxCharger.RemoveDebuff(entity);
+        return TextCommandResult.Success("FluxCharger debuffs cleared.");
     }
 
     private static TextCommandResult OnGiveFluxCharger(TextCommandCallingArgs args)

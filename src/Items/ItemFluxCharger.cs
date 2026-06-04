@@ -28,7 +28,8 @@ public class ItemFluxCharger : Item
         if (data == null || !data.IsFluxUnlocked) return;
         if (flux == null || flux.GetFluxAlignmentLevel() >= EntityBehaviorFlux.MaxAlignmentLevel) return;
 
-        Spells.SpellAnimations.Play(byEntity, "alignment_amplifier");
+        // Let VS trigger heldTpUseAnimation + heldRightReadyAnimation via base
+        base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
 
         if (byEntity.World.Side != EnumAppSide.Client) return;
         byEntity.World.PlaySoundAt(

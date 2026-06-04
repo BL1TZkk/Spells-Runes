@@ -383,7 +383,7 @@ public static class DebugCommands
 
     private static TextCommandResult OnClearDebuff(TextCommandCallingArgs args)
     {
-        if (args.Caller.Entity is not { } entity)
+        if (args.Caller.Entity is not EntityAgent entity)
             return TextCommandResult.Error("No player entity found.");
 
         Items.ItemFluxCharger.RemoveDebuff(entity);

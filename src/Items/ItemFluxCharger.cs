@@ -24,15 +24,16 @@ public class ItemFluxCharger : Item
         if (!firstEvent) return;
         handling = EnumHandHandling.PreventDefault;
 
-        var data = PlayerSpellData.For(byEntity);
-        var flux = byEntity.GetBehavior<EntityBehaviorFlux>();
-        if (data == null || !data.IsFluxUnlocked) return;
-        if (flux == null || flux.GetFluxAlignmentLevel() >= EntityBehaviorFlux.MaxAlignmentLevel) return;
-
+        // Start animation before condition checks so it always plays
         if (byEntity.World.Side == EnumAppSide.Server && byEntity.Api is ICoreServerAPI sapi && SpellsAndRunesMod.ServerChannel != null)
             SpellsAndRunesMod.BroadcastAnimation(sapi, SpellsAndRunesMod.ServerChannel, byEntity, "alignment_amplifier");
         else if (byEntity.World.Side == EnumAppSide.Client)
             Spells.SpellAnimations.Play(byEntity, "alignment_amplifier");
+
+        var data = PlayerSpellData.For(byEntity);
+        var flux = byEntity.GetBehavior<EntityBehaviorFlux>();
+        if (data == null || !data.IsFluxUnlocked) return;
+        if (flux == null || flux.GetFluxAlignmentLevel() >= EntityBehaviorFlux.MaxAlignmentLevel) return;
 
         if (byEntity.World.Side != EnumAppSide.Client) return;
         byEntity.World.PlaySoundAt(

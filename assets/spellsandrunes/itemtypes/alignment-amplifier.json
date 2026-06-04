@@ -7,7 +7,7 @@
 	"textures": {
 		"alignment_amplifier": { "base": "spellsandrunes:item/alignment_amplifier" }
 	},
-	"heldTpUseAnimation": "drink",
+	"heldTpUseAnimation": "alignment_amplifier",
 	"creativeinventory": {
 		"general": ["*"],
 		"items": ["*"]

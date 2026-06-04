@@ -13,7 +13,7 @@
 		"alignment_amplifier": [16, 16]
 	},
 	"textures": {
-		"alignment_amplifier": "item/alignment-amplifier"
+		"alignment_amplifier": "item/alignment_amplifier"
 	},
 	"elements": [
 		{

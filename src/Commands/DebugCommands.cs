@@ -380,7 +380,7 @@ public static class DebugCommands
         if (args.Caller.Entity is not { } entity)
             return TextCommandResult.Error("No player entity found.");
 
-        var item = sapi.World.GetItem(new AssetLocation("spellsandrunes:flux-charger"));
+        var item = sapi.World.GetItem(new AssetLocation("spellsandrunes:alignment-amplifier"));
         if (item == null)
             return TextCommandResult.Error("Item spellsandrunes:flux-charger not found.");
 

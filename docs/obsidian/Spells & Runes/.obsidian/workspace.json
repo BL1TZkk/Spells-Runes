@@ -1,0 +1,207 @@
+{
+  "main": {
+    "id": "d442c6f7b0d4d135",
+    "type": "split",
+    "children": [
+      {
+        "id": "cd5bbb26956d9eac",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "af5d0606e269320b",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graf"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "115c1042532fc3f6",
+    "type": "split",
+    "children": [
+      {
+        "id": "f46533ee003ff7e7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4d4787bdc6041699",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Průzkumník souborů"
+            }
+          },
+          {
+            "id": "54d4c7be3d3a37e7",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Hledat"
+            }
+          },
+          {
+            "id": "77950558913cf6a3",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Záložky"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "39dc8bab901de686",
+    "type": "split",
+    "children": [
+      {
+        "id": "462edcd086e2adec",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f9bd851550e0fe2e",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Zpětné odkazy"
+            }
+          },
+          {
+            "id": "ec5ca13c9994d168",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Odchozí odkazy"
+            }
+          },
+          {
+            "id": "f70f349683a4e9b7",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Štítky"
+            }
+          },
+          {
+            "id": "6771002e11a1035c",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Všechny vlastnosti"
+            }
+          },
+          {
+            "id": "64b0cdc9a722ef88",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Přehled"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Otevřít rychlé přepínání": false,
+      "graph:Otevřít graf": false,
+      "canvas:Vytvořit nový canvas": false,
+      "daily-notes:Otevřít dnešní poznámku": false,
+      "templates:Vložit šablonu": false,
+      "command-palette:Otevřít paletu příkazů": false,
+      "bases:Vytvořit novou základnu": false
+    }
+  },
+  "active": "4d4787bdc6041699",
+  "lastOpenFiles": [
+    "Lore/Journal.zip",
+    "Lore/Journal/General/First Scroll found.md",
+    "Lore/Journal/General/General Journal entries.md",
+    "Lore/Lore.md",
+    "Lore/Journal/Journal.md",
+    "Lore/Journal/Fire/Fire Journal entries.md",
+    "Lore/Journal/Air/Air Journal entries.md",
+    "Lore/Journal/Fire/Fire Awakening.md",
+    "Lore/Journal/Air/Air Awakening.md",
+    "Lore/Journal/Fire",
+    "Lore/Journal/Air",
+    "Lore/Journal/General",
+    "Lore/Scrolls/Scrolls.md",
+    "Lore/Scrolls/Fire/Fire Scrolls.md",
+    "Lore/Scrolls/Air/Air Scrolls.md",
+    "Lore/Scrolls/Fire/Field manual, unit designation redacted.md",
+    "Lore/Scrolls/Fire/Record of internal affairs, The Ashveil Brotherhood.md",
+    "Lore/Scrolls/Air/E. Voss, winter residency notes.md",
+    "Lore/Scrolls/Air/Field Notes by R. Aldenmoor.md",
+    "Lore/Scrolls/Air",
+    "Lore/Scrolls/Fire",
+    "Vítejte.md",
+    "Lore/Journal",
+    "Lore",
+    "Lore/Scrolls"
+  ]
+}

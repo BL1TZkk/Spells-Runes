@@ -1,0 +1,16 @@
+{
+	"code": "alignment-amplifier",
+	"class": "FluxCharger",
+	"maxstacksize": 1,
+	"renderType": "shape",
+	"shape": { "base": "spellsandrunes:item/alignment-amplifier" },
+	"textures": {
+		"alignment_amplifier": { "base": "spellsandrunes:item/alignment-amplifier" }
+	},
+	"heldRightReadyAnimation": "drink",
+	"heldTpUseAnimation": "drink",
+	"creativeinventory": {
+		"general": ["*"],
+		"items": ["*"]
+	}
+}

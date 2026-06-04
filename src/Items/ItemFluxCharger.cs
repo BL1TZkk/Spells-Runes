@@ -24,11 +24,21 @@ public class ItemFluxCharger : Item
         if (!firstEvent) return;
         handling = EnumHandHandling.PreventDefault;
 
-        // Start animation before condition checks so it always plays
+        // Trigger animation — both direct and broadcast to match spell pattern
         if (byEntity.World.Side == EnumAppSide.Server && byEntity.Api is ICoreServerAPI sapi && SpellsAndRunesMod.ServerChannel != null)
+        {
             SpellsAndRunesMod.BroadcastAnimation(sapi, SpellsAndRunesMod.ServerChannel, byEntity, "alignment_amplifier");
-        else if (byEntity.World.Side == EnumAppSide.Client)
-            Spells.SpellAnimations.Play(byEntity, "alignment_amplifier");
+        }
+        // Also trigger directly on client via AnimManager (bypasses SpellAnimations wrapper)
+        byEntity.AnimManager?.StartAnimation(new AnimationMetaData
+        {
+            Code          = "alignment_amplifier",
+            Animation     = "alignment_amplifier",
+            Weight        = 10f,
+            EaseInSpeed   = 5f,
+            EaseOutSpeed  = 5f,
+            BlendMode     = EnumAnimationBlendMode.Average,
+        });
 
         var data = PlayerSpellData.For(byEntity);
         var flux = byEntity.GetBehavior<EntityBehaviorFlux>();

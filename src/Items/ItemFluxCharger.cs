@@ -23,12 +23,14 @@ public class ItemFluxCharger : Item
         if (!firstEvent) return;
         handling = EnumHandHandling.PreventDefault;
 
-        if (byEntity.World.Side != EnumAppSide.Client) return;
         var data = PlayerSpellData.For(byEntity);
         var flux = byEntity.GetBehavior<EntityBehaviorFlux>();
         if (data == null || !data.IsFluxUnlocked) return;
         if (flux == null || flux.GetFluxAlignmentLevel() >= EntityBehaviorFlux.MaxAlignmentLevel) return;
 
+        Spells.SpellAnimations.Play(byEntity, "alignment_amplifier");
+
+        if (byEntity.World.Side != EnumAppSide.Client) return;
         byEntity.World.PlaySoundAt(
             new AssetLocation("game:sounds/effect/deepbreath"),
             byEntity, null, false, 16f, 0.6f);
@@ -63,6 +65,8 @@ public class ItemFluxCharger : Item
     public override void OnHeldInteractStop(float secondsUsed, ItemSlot slot,
         EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
     {
+        Spells.SpellAnimations.Stop(byEntity, "alignment_amplifier");
+
         if (secondsUsed < UseDuration - 0.1f) return;
 
         if (byEntity.World.Side == EnumAppSide.Client)

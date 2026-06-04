@@ -5,6 +5,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 
 namespace SpellsAndRunes.Items;
 
@@ -28,8 +29,10 @@ public class ItemFluxCharger : Item
         if (data == null || !data.IsFluxUnlocked) return;
         if (flux == null || flux.GetFluxAlignmentLevel() >= EntityBehaviorFlux.MaxAlignmentLevel) return;
 
-        // Let VS trigger heldTpUseAnimation + heldRightReadyAnimation via base
-        base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
+        if (byEntity.World.Side == EnumAppSide.Server && byEntity.Api is ICoreServerAPI sapi && SpellsAndRunesMod.ServerChannel != null)
+            SpellsAndRunesMod.BroadcastAnimation(sapi, SpellsAndRunesMod.ServerChannel, byEntity, "alignment_amplifier");
+        else if (byEntity.World.Side == EnumAppSide.Client)
+            Spells.SpellAnimations.Play(byEntity, "alignment_amplifier");
 
         if (byEntity.World.Side != EnumAppSide.Client) return;
         byEntity.World.PlaySoundAt(

@@ -109,7 +109,7 @@ public class SpellsAndRunesMod : ModSystem
             CountChickenDeath(api, entity);
         };
 
-        serverChannel = api.Network.RegisterChannel(ChannelName)
+        serverChannel = ServerChannel = api.Network.RegisterChannel(ChannelName)
             .RegisterMessageType<MsgUnlockSpell>()
             .RegisterMessageType<MsgSetHotbarSlot>()
             .RegisterMessageType<MsgCastSpell>()
@@ -1476,6 +1476,21 @@ public class SpellsAndRunesMod : ModSystem
 
         BroadcastAnimationCode(api, entity, spell.AnimationCode!, spell.AnimationTakesOverBody, spell.AnimationSpeed);
     }
+
+    internal static void BroadcastAnimation(ICoreServerAPI api, IServerNetworkChannel channel, Entity entity, string animationCode, bool takesOverBody = false, float animationSpeed = 1f)
+    {
+        var msg = new Network.MsgPlayAnimation
+        {
+            EntityId      = entity.EntityId,
+            AnimationCode = animationCode,
+            TakesOverBody = takesOverBody,
+            AnimationSpeed = animationSpeed,
+        };
+        foreach (var p in api.World.AllOnlinePlayers)
+            channel.SendPacket(msg, p as IServerPlayer);
+    }
+
+    internal static IServerNetworkChannel? ServerChannel;
 
     private void BroadcastAnimationCode(ICoreServerAPI api, Entity entity, string animationCode, bool takesOverBody, float animationSpeed = 1f)
     {

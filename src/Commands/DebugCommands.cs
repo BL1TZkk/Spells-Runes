@@ -129,8 +129,8 @@ public static class DebugCommands
                 .HandleWith(OnClearLore)
             .EndSubCommand()
 
-            // /snr fluxcharger
-            .BeginSubCommand("fluxcharger")
+            // /snr alignmentamplifier
+            .BeginSubCommand("alignmentamplifier")
                 .WithDescription("Give yourself an Alignment Amplifier item")
                 .RequiresPrivilege(Privilege.controlserver)
                 .HandleWith(OnGiveFluxCharger)

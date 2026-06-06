@@ -11,8 +11,7 @@ namespace SpellsAndRunes.Items;
 
 public class ItemFluxCharger : Item
 {
-    private const float UseDuration = 8f;
-    private const float CrazyStart  = 5f;
+    private const float UseDuration = 4.05f; // matches animation length (121 frames @ 30fps)
     private const int   DebuffMs    = 30_000;
 
     internal const string AttrDebuffEnd = "snr:fluxoverload_end";
@@ -45,26 +44,6 @@ public class ItemFluxCharger : Item
     public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot,
         EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
     {
-        if (byEntity.World.Side == EnumAppSide.Client)
-        {
-            float crazyP = secondsUsed < CrazyStart
-                ? 0f
-                : (secondsUsed - CrazyStart) / (UseDuration - CrazyStart);
-
-            if (crazyP > 0f)
-            {
-                float t = secondsUsed - CrazyStart;
-                SpawnOrbitRings(byEntity, t, crazyP);
-                SpawnSphereShell(byEntity, t, crazyP);
-                byEntity.Pos.Motion.Y = 0.018f + crazyP * 0.035f;
-
-                if (secondsUsed > CrazyStart && secondsUsed < CrazyStart + 0.1f)
-                    byEntity.World.PlaySoundAt(
-                        new AssetLocation("game:sounds/effect/deepbreath"),
-                        byEntity, null, false, 16f, 0.8f);
-            }
-        }
-
         return secondsUsed < UseDuration;
     }
 

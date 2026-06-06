@@ -8,7 +8,7 @@
       "code": "flx_inject",
       "quantityframes": 121,
       "onActivityStopped": "EaseOut",
-      "onAnimationEnd": "Repeat",
+      "onAnimationEnd": "Stop",
       "keyframes": [
         {
           "frame": 0,

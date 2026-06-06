@@ -57,7 +57,20 @@ public class ItemFluxCharger : Item
 
         if (byEntity.World.Side == EnumAppSide.Client)
         {
-            byEntity.Pos.Motion.Y = 0.25f; // brief upward launch on injection
+            // Levitate for UseDuration seconds after injection
+            if (byEntity.Api is ICoreClientAPI capi)
+            {
+                float elapsed = 0f;
+                long tickId = 0;
+                tickId = capi.Event.RegisterGameTickListener(dt =>
+                {
+                    elapsed += dt;
+                    if (elapsed >= UseDuration)
+                    { capi.Event.UnregisterGameTickListener(tickId); return; }
+                    float p = elapsed / UseDuration;
+                    byEntity.Pos.Motion.Y = Math.Max(byEntity.Pos.Motion.Y, 0.018f + p * 0.035f);
+                }, 20);
+            }
             SpawnOrbitRings(byEntity, 0f, 1f);
             SpawnSphereShell(byEntity, 0f, 1f);
             SpawnSphereBurst(byEntity);

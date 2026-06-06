@@ -44,6 +44,12 @@ public class ItemFluxCharger : Item
     public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot,
         EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
     {
+        if (byEntity.World.Side == EnumAppSide.Client)
+        {
+            float progress = secondsUsed / UseDuration;
+            byEntity.Pos.Motion.Y = 0.018f + progress * 0.035f;
+        }
+
         return secondsUsed < UseDuration;
     }
 

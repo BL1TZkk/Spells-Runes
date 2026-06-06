@@ -29,7 +29,7 @@ public class ItemFluxCharger : Item
         {
             SpellsAndRunesMod.BroadcastAnimation(sapi, SpellsAndRunesMod.ServerChannel, byEntity, "alignment_amplifier");
         }
-        Spells.SpellAnimations.Play(byEntity, "alignment_amplifier");
+        Spells.SpellAnimations.Play(byEntity, "alignment_amplifier", takesOverBody: true);
 
         var data = PlayerSpellData.For(byEntity);
         var flux = byEntity.GetBehavior<EntityBehaviorFlux>();

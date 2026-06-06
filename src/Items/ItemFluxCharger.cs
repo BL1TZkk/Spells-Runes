@@ -27,9 +27,9 @@ public class ItemFluxCharger : Item
         // Trigger animation — both direct and broadcast to match spell pattern
         if (byEntity.World.Side == EnumAppSide.Server && byEntity.Api is ICoreServerAPI sapi && SpellsAndRunesMod.ServerChannel != null)
         {
-            SpellsAndRunesMod.BroadcastAnimation(sapi, SpellsAndRunesMod.ServerChannel, byEntity, "alignment_amplifier");
+            SpellsAndRunesMod.BroadcastAnimation(sapi, SpellsAndRunesMod.ServerChannel, byEntity, "flx_inject");
         }
-        Spells.SpellAnimations.Play(byEntity, "alignment_amplifier", takesOverBody: true);
+        Spells.SpellAnimations.Play(byEntity, "flx_inject", takesOverBody: true);
 
         var data = PlayerSpellData.For(byEntity);
         var flux = byEntity.GetBehavior<EntityBehaviorFlux>();
@@ -71,7 +71,7 @@ public class ItemFluxCharger : Item
     public override void OnHeldInteractStop(float secondsUsed, ItemSlot slot,
         EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
     {
-        Spells.SpellAnimations.Stop(byEntity, "alignment_amplifier");
+        Spells.SpellAnimations.Stop(byEntity, "flx_inject");
 
         if (secondsUsed < UseDuration - 0.1f) return;
 

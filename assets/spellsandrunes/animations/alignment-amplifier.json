@@ -5,7 +5,7 @@
       "code": "alignment_amplifier",
       "quantityframes": 121,
       "onActivityStopped": "EaseOut",
-      "onAnimationEnd": "Hold",
+      "onAnimationEnd": "Stop",
       "keyframes": [
         {
           "frame": 0,

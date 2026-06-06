@@ -6008,12 +6008,12 @@
       "code": "alignment_amplifier",
       "quantityframes": 121,
       "onActivityStopped": "EaseOut",
-      "onAnimationEnd": "Hold",
+      "onAnimationEnd": "Stop",
       "keyframes": [
         {
           "frame": 0,
           "elements": {
-            "UpperArmR": { "rotationX": 0, "rotationY": 0, "rotationZ": 0, "offsetX": 0, "offsetY": 0, "offsetZ": 0 },
+            "UpperArmR": { "rotationX": 0, "rotationY": 0, "rotationZ": 0 },
             "LowerArmR": { "rotationX": 0, "rotationY": 0, "rotationZ": 0 },
             "UpperArmL": { "rotationX": 0, "rotationY": 0, "rotationZ": 0, "offsetX": 0, "offsetY": 0, "offsetZ": 0 },
             "LowerArmL": { "rotationX": 0, "rotationY": 0, "rotationZ": 0 }

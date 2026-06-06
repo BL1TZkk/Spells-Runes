@@ -16,7 +16,7 @@ public class FireFist : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType Type => SpellType.Offense;
 
-    public override float FluxCost => 18f;
+    public override float FluxCost => 22f;
     private const int FirstHitFrame = 13;
     private static readonly int[] HitFrames = { 13, 21, 29, 36 };
 
@@ -29,7 +29,7 @@ public class FireFist : Spell
     public override (int col, int row) TreePosition => (0, 2);
 
     public const float Range = 2.2f;
-    public const float Damage = 6f;
+    public const float Damage = 10f;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {

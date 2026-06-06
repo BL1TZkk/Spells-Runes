@@ -16,7 +16,7 @@ public class FireJetLaunch : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType Type => SpellType.Enchantment;
 
-    public override float FluxCost => 30f;
+    public override float FluxCost => 33f;
     public override float CastTime => 0.5f;
 
     public override string? AnimationCode => "fire_jet_launch";

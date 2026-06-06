@@ -19,11 +19,11 @@ public class HotSkin : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType    Type    => SpellType.Defense;
 
-    public override float FluxCost => 18f;
+    public override float FluxCost => 22f;
     public override float CastTime => 0f;
 
     public const float Radius = 2.2f;
-    public const float DamagePerSecond = 3f;
+    public const float DamagePerSecond = 4f;
 
     // Left column, row 0
     public override (int col, int row) TreePosition => (0, 0);

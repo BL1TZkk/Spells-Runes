@@ -18,7 +18,7 @@ public class FireDance : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType Type => SpellType.Enchantment;
 
-    public override float FluxCost => 36f;
+    public override float FluxCost => 44f;
     private const int FirstBeatFrame = 15;
 
     public override float CastTime => FirstBeatFrame / 30f;
@@ -32,7 +32,7 @@ public class FireDance : Spell
     public const float StepDistance = 0.35f;
     public const float ConeRange = 4.5f;
     public const float ConeAngleDeg = 36f;
-    public const float Damage = 5f;
+    public const float Damage = 7f;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {

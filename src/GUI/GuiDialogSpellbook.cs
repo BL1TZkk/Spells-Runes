@@ -1089,15 +1089,25 @@ public class GuiDialogSpellbook : GuiDialog
             {
                 ctx.SetSourceRGBA(ser, seg, seb, hov ? 1 : 0.85);
                 TextCenter(ctx, cur.Name[0].ToString(), scx, scy + 4);
-                ctx.SetFontSize(9); C(ctx, ClrDim, 0.85);
-                TextCenter(ctx, cur.Name.Split(' ')[0], scx, scy + vr + 12);
+                ctx.SetFontSize(10); C(ctx, ClrDim, hov ? 0.95 : 0.85);
+                var np = cur.Name.Split(' ');
+                if (np.Length <= 1)
+                {
+                    TextCenter(ctx, cur.Name, scx, scy + slotR + 14);
+                }
+                else
+                {
+                    int half = np.Length / 2;
+                    TextCenter(ctx, string.Join(" ", np.Take(half)),  scx, scy + slotR + 14);
+                    TextCenter(ctx, string.Join(" ", np.Skip(half)), scx, scy + slotR + 26);
+                }
             }
             else
             {
                 ctx.SetSourceRGBA(0.314, 0.282, 0.227, 0.7);
                 TextCenter(ctx, "—", scx, scy + 4);
-                ctx.SetFontSize(9); C(ctx, ClrDim, 0.5);
-                TextCenter(ctx, "Empty", scx, scy + vr + 12);
+                ctx.SetFontSize(10); C(ctx, ClrDim, 0.5);
+                TextCenter(ctx, "Empty", scx, scy + slotR + 14);
             }
             ctx.SetFontSize(9); C(ctx, ClrDim, 0.65);
             TextCenter(ctx, (s + 1).ToString(), scx, scy - vr - 5);

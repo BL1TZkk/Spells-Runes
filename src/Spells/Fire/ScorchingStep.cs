@@ -19,7 +19,7 @@ public class ScorchingStep : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType Type => SpellType.Enchantment;
 
-    public override float FluxCost => 20f;
+    public override float FluxCost => 24f;
     public override float CastTime => 0.35f;
 
     public override string? AnimationCode => "fire_scorching_step";

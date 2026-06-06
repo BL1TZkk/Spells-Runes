@@ -16,7 +16,7 @@ public class FireWall : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType Type => SpellType.Defense;
 
-    public override float FluxCost => 32f;
+    public override float FluxCost => 40f;
     public override float CastTime => 1.0f;
 
     public override string? AnimationCode => "fire_wall";
@@ -29,7 +29,7 @@ public class FireWall : Spell
     public const float Width = 5.5f;
     public const float Height = 2.4f;
     public const float Thickness = 0.9f;
-    public const float DamagePerSecond = 7f;
+    public const float DamagePerSecond = 10f;
     public const float PushForce = 0.22f;
     public const float StartDistance = 1.35f;
     public const float EndDistance = 4.0f;

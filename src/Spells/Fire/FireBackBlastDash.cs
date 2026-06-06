@@ -16,7 +16,7 @@ public class FireBackBlastDash : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType Type => SpellType.Offense;
 
-    public override float FluxCost => 18f;
+    public override float FluxCost => 20f;
     public override float CastTime => 0.4f;
 
     public override string? AnimationCode => "fire_back_blast_dash";

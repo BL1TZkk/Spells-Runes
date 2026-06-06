@@ -59,6 +59,8 @@ public class SpellsAndRunesMod : ModSystem
     private readonly Dictionary<string, long> recentFxReceipts = new();
     private readonly Dictionary<string, long> recentSpellReceipts = new();
     private readonly Dictionary<string, long> recentSpellSoundReceipts = new();
+    private readonly Dictionary<string, ILoadedSound> activeChannelSounds = new();
+    private readonly Dictionary<string, long> channelSoundLastMs = new();
     private string? heldChannelSpellId;
     private bool lmbHoldActive;
     private string? lmbHoldSpellId;
@@ -864,6 +866,7 @@ public class SpellsAndRunesMod : ModSystem
         IdleAnim     = new IdleAnimatedBlockRenderer(api);
 
         api.Event.RegisterGameTickListener(_ => coneRenderer.OnGameTick(_), 50);
+        api.Event.RegisterGameTickListener(_ => TickChannelSounds(), 250);
 
         // /snr debug — toggle all hitbox visualizations together
         api.Input.RegisterHotKey("spellsandrunes.debug", "Toggle Spell Debugs", GlKeys.F8, HotkeyType.GUIOrOtherControls);
@@ -932,7 +935,7 @@ public class SpellsAndRunesMod : ModSystem
         api.Event.MouseDown += (MouseEvent e) =>
         {
             if (e.Button != EnumMouseButton.Right) return;
-            if (spellbookDialog.IsOpened() || radialMenu.IsOpen) return;
+            if (!api.Input.MouseGrabbed || radialMenu.IsOpen) return;
 
             string? spellId = radialMenu.GetSelectedSpellId();
             if (spellId == "air_wind_vortex")
@@ -977,7 +980,7 @@ public class SpellsAndRunesMod : ModSystem
         api.Event.MouseDown += (MouseEvent e) =>
         {
             if (e.Button != EnumMouseButton.Left) return;
-            if (spellbookDialog.IsOpened()) return;
+            if (!api.Input.MouseGrabbed) return; // any GUI (inventory, spellbook, etc.) has focus
             if (radialMenu.IsOpen) return; // radial handles its own LMB via OnMouseDown
 
             string? spellId = radialMenu.GetSelectedSpellId();
@@ -1536,11 +1539,37 @@ public class SpellsAndRunesMod : ModSystem
         var sound = GetSpellSound(spellId);
         if (sound.Path == null) return;
 
-        long nowMs = api.World.ElapsedMilliseconds;
-        if (recentSpellSoundReceipts.TryGetValue(spellId, out long lastMs) && nowMs - lastMs < sound.ThrottleMs)
+        float levelBump = Math.Min(0.12f, Math.Max(0, spellLevel - 1) * 0.015f);
+
+        if (IsChannelSpell(spellId))
         {
+            channelSoundLastMs[spellId] = api.World.ElapsedMilliseconds;
+            if (activeChannelSounds.TryGetValue(spellId, out var existing) && existing.IsPlaying)
+            {
+                existing.SetPosition((float)origin.X, (float)origin.Y, (float)origin.Z);
+            }
+            else
+            {
+                existing?.Stop();
+                existing?.Dispose();
+                var loaded = api.World.LoadSound(new SoundParams
+                {
+                    Location         = new AssetLocation(sound.Path),
+                    Position         = new Vec3f((float)origin.X, (float)origin.Y, (float)origin.Z),
+                    Range            = sound.Range,
+                    Volume           = sound.Volume + levelBump,
+                    ShouldLoop       = true,
+                    RelativePosition = false,
+                });
+                loaded?.Start();
+                if (loaded != null) activeChannelSounds[spellId] = loaded;
+            }
             return;
         }
+
+        long nowMs = api.World.ElapsedMilliseconds;
+        if (recentSpellSoundReceipts.TryGetValue(spellId, out long lastMs) && nowMs - lastMs < sound.ThrottleMs)
+            return;
 
         recentSpellSoundReceipts[spellId] = nowMs;
         if (recentSpellSoundReceipts.Count > 64)
@@ -1548,16 +1577,11 @@ public class SpellsAndRunesMod : ModSystem
             string? staleKey = null;
             foreach (var pair in recentSpellSoundReceipts)
             {
-                if (nowMs - pair.Value > 3000)
-                {
-                    staleKey = pair.Key;
-                    break;
-                }
+                if (nowMs - pair.Value > 3000) { staleKey = pair.Key; break; }
             }
             if (staleKey != null) recentSpellSoundReceipts.Remove(staleKey);
         }
 
-        float levelBump = Math.Min(0.12f, Math.Max(0, spellLevel - 1) * 0.015f);
         api.World.PlaySoundAt(
             new AssetLocation(sound.Path),
             origin.X, origin.Y, origin.Z,
@@ -1565,6 +1589,21 @@ public class SpellsAndRunesMod : ModSystem
             false,
             sound.Range,
             sound.Volume + levelBump);
+    }
+
+    private void TickChannelSounds()
+    {
+        if (activeChannelSounds.Count == 0) return;
+        long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var toStop = new List<string>();
+        foreach (var pair in channelSoundLastMs)
+            if (nowMs - pair.Value > 600) toStop.Add(pair.Key);
+        foreach (var key in toStop)
+        {
+            channelSoundLastMs.Remove(key);
+            if (activeChannelSounds.Remove(key, out var snd))
+            { snd.Stop(); snd.Dispose(); }
+        }
     }
 
     private static (string? Path, float Range, float Volume, int ThrottleMs) GetSpellSound(string spellId) => spellId switch

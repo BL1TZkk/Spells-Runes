@@ -16,7 +16,7 @@ public class Spark : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType    Type    => SpellType.Offense;
 
-    public override float FluxCost => 15f;
+    public override float FluxCost => 18f;
     private const int ReleaseFrame = 22;
 
     public override float CastTime => ReleaseFrame / 30f;
@@ -27,7 +27,7 @@ public class Spark : Spell
 
     public const float Range        = 6f;
     public const float ConeAngleDeg = 40f;
-    public const float Damage       = 4f;
+    public const float Damage       = 6f;
 
     private static readonly Vec3d Up      = new Vec3d(0, 1, 0);
     private static readonly float CosAngle = (float)Math.Cos(ConeAngleDeg * Math.PI / 180.0);

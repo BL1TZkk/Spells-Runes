@@ -17,7 +17,7 @@ public class FireMine : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType Type => SpellType.Offense;
 
-    public override float FluxCost => 24f;
+    public override float FluxCost => 30f;
     public override float CastTime => 0.8f;
 
     public override string? AnimationCode => "fire_mine";
@@ -27,7 +27,7 @@ public class FireMine : Spell
     public override (int col, int row) TreePosition => (0, 5);
 
     public const float Radius = 1.45f;
-    public const float Damage = 10f;
+    public const float Damage = 14f;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {

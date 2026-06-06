@@ -1,0 +1,34 @@
+[
+  {
+    "op": "add",
+    "path": "/selling/list/-",
+    "file": "survival:config/tradelists/trader-artisan.json",
+    "value": {
+      "code": "alignment-amplifier",
+      "type": "item",
+      "domain": "spellsandrunes",
+      "stacksize": 1,
+      "stock": { "avg": 1, "var": 0 },
+      "price": { "avg": 45, "var": 8 }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/selling/list/-",
+    "file": "survival:config/tradelists/trader-treasurehunter.json",
+    "value": {
+      "code": "alignment-amplifier",
+      "type": "item",
+      "domain": "spellsandrunes",
+      "stacksize": 1,
+      "stock": { "avg": 1, "var": 0 },
+      "price": { "avg": 38, "var": 7 }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/attributesByType/*-mines/stacks/-",
+    "file": "survival:itemtypes/meta/stackrandomizer-mines.json",
+    "value": { "type": "item", "code": "spellsandrunes:alignment-amplifier", "chance": 0.4 }
+  }
+]

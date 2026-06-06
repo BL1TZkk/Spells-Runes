@@ -18,7 +18,7 @@ public class FireOrb : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType Type => SpellType.Offense;
 
-    public override float FluxCost => 20f;
+    public override float FluxCost => 26f;
     private const int FirstReleaseFrame = 19;
 
     public override float CastTime => FirstReleaseFrame / 30f;
@@ -32,7 +32,7 @@ public class FireOrb : Spell
     public const float Range = 12f;
     public const float Speed = 16f;
     public const float HitRadius = 0.55f;
-    public const float Damage = 7f;
+    public const float Damage = 11f;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {

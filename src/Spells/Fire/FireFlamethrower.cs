@@ -17,7 +17,7 @@ public class FireFlamethrower : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType Type => SpellType.Offense;
 
-    public override float FluxCost => 30f;
+    public override float FluxCost => 36f;
     public override float CastTime => 0f;
 
     public override string? AnimationCode => "fire_flamethrower";
@@ -28,7 +28,7 @@ public class FireFlamethrower : Spell
 
     public const float Range = 7f;
     public const float ConeAngleDeg = 24f;
-    public const float DamagePerSecond = 5f;
+    public const float DamagePerSecond = 7f;
     private const double IgniteChancePerTick = 0.025;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)

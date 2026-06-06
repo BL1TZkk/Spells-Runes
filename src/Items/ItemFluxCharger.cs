@@ -30,15 +30,22 @@ public class ItemFluxCharger : Item
         }
         Spells.SpellAnimations.Play(byEntity, "flx_inject", takesOverBody: true);
 
+        if (byEntity.Api is ICoreClientAPI capi0)
+        {
+            capi0.World.PlaySoundAt(
+                new AssetLocation("survival:sounds/player/drink2"),
+                byEntity.Pos.X, byEntity.Pos.Y, byEntity.Pos.Z,
+                capi0.World.Player, false, 16f, 0.6f);
+            capi0.World.PlaySoundAt(
+                new AssetLocation("survival:sounds/player/stab"),
+                byEntity.Pos.X, byEntity.Pos.Y, byEntity.Pos.Z,
+                capi0.World.Player, false, 16f, 0.9f);
+        }
+
         var data = PlayerSpellData.For(byEntity);
         var flux = byEntity.GetBehavior<EntityBehaviorFlux>();
         if (data == null || !data.IsFluxUnlocked) return;
         if (flux == null || flux.GetFluxAlignmentLevel() >= EntityBehaviorFlux.MaxAlignmentLevel) return;
-
-        if (byEntity.World.Side != EnumAppSide.Client) return;
-        byEntity.World.PlaySoundAt(
-            new AssetLocation("game:sounds/effect/deepbreath"),
-            byEntity, null, false, 16f, 0.6f);
     }
 
     public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot,
@@ -57,10 +64,22 @@ public class ItemFluxCharger : Item
 
         if (byEntity.World.Side == EnumAppSide.Client)
         {
-            // Levitate for UseDuration seconds after injection
+            SpawnSphereBurst(byEntity);
+            SpawnGroundRing(byEntity);
+
             if (byEntity.Api is ICoreClientAPI capi)
             {
+                capi.World.PlaySoundAt(
+                    new AssetLocation("survival:sounds/effect/portal"),
+                    byEntity.Pos.X, byEntity.Pos.Y, byEntity.Pos.Z,
+                    capi.World.Player, false, 32f, 0.85f);
+                capi.World.PlaySoundAt(
+                    new AssetLocation("survival:sounds/effect/largeexplosion"),
+                    byEntity.Pos.X, byEntity.Pos.Y, byEntity.Pos.Z,
+                    capi.World.Player, false, 48f, 1.0f);
+
                 float elapsed = 0f;
+                bool midPlayed = false;
                 long tickId = 0;
                 tickId = capi.Event.RegisterGameTickListener(dt =>
                 {
@@ -68,16 +87,19 @@ public class ItemFluxCharger : Item
                     if (elapsed >= UseDuration)
                     { capi.Event.UnregisterGameTickListener(tickId); return; }
                     float p = elapsed / UseDuration;
-                    byEntity.Pos.Motion.Y = Math.Max(byEntity.Pos.Motion.Y, 0.018f + p * 0.035f);
+                    byEntity.Pos.Motion.Y = Math.Max(byEntity.Pos.Motion.Y, 0.008f + p * 0.014f);
+                    if (!midPlayed && elapsed >= UseDuration * 0.5f)
+                    {
+                        midPlayed = true;
+                        capi.World.PlaySoundAt(
+                            new AssetLocation("survival:sounds/effect/portal"),
+                            byEntity.Pos.X, byEntity.Pos.Y, byEntity.Pos.Z,
+                            capi.World.Player, false, 32f, 0.65f);
+                    }
+                    SpawnOrbitRings(byEntity, elapsed, p);
+                    SpawnSphereShell(byEntity, elapsed, p);
                 }, 20);
             }
-            SpawnOrbitRings(byEntity, 0f, 1f);
-            SpawnSphereShell(byEntity, 0f, 1f);
-            SpawnSphereBurst(byEntity);
-            SpawnGroundRing(byEntity);
-            byEntity.World.PlaySoundAt(
-                new AssetLocation("game:sounds/effect/thunder"),
-                byEntity, null, false, 48f, 1.0f);
             return;
         }
 

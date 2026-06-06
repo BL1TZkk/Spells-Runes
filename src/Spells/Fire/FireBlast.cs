@@ -16,7 +16,7 @@ public class FireBlast : Spell
     public override SpellElement Element => SpellElement.Fire;
     public override SpellType Type => SpellType.Offense;
 
-    public override float FluxCost => 24f;
+    public override float FluxCost => 32f;
     public override float CastTime => 0.75f;
 
     public override string? AnimationCode => "fire_blast";
@@ -28,7 +28,7 @@ public class FireBlast : Spell
     public const float Range = 18f;
     public const float Speed = 100f;
     public const float HitRadius = 0.75f;
-    public const float Damage = 12f;
+    public const float Damage = 16f;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {

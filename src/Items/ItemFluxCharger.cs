@@ -29,16 +29,7 @@ public class ItemFluxCharger : Item
         {
             SpellsAndRunesMod.BroadcastAnimation(sapi, SpellsAndRunesMod.ServerChannel, byEntity, "alignment_amplifier");
         }
-        // Trigger directly via AnimManager on both sides — same weight as spell animations
-        byEntity.AnimManager?.StartAnimation(new AnimationMetaData
-        {
-            Code          = "alignment_amplifier",
-            Animation     = "alignment_amplifier",
-            Weight        = 1000f,
-            EaseInSpeed   = 10f,
-            EaseOutSpeed  = 10f,
-            BlendMode     = EnumAnimationBlendMode.Average,
-        });
+        Spells.SpellAnimations.Play(byEntity, "alignment_amplifier");
 
         var data = PlayerSpellData.For(byEntity);
         var flux = byEntity.GetBehavior<EntityBehaviorFlux>();

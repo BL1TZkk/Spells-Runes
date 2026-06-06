@@ -27,10 +27,17 @@ public class CloningWindStep : Spell
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {
+        var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
+
+        // Spawn clone 0.8 blocks behind caster so the WindSlash (forward) doesn't immediately hit it
+        var clonePos = caster.Pos.Copy();
+        clonePos.X -= lookDir.X * 0.8;
+        clonePos.Z -= lookDir.Z * 0.8;
+
         var origin = caster.Pos.XYZ.Add(0, 0.7, 0);
         WindClone.SpawnFx(world, origin, spellLevel);
+        WindClone.SpawnCloneEntity(caster, world, clonePos, spellLevel);
 
-        var lookDir = caster.Pos.GetViewVector().ToVec3d().Normalize();
         WindSlash.HitAlongLine(caster, world, caster.Pos.XYZ.Add(0, caster.LocalEyePos.Y - 0.15, 0), lookDir,
             WindStep.Range * GetRangeMultiplier(spellLevel), WindStep.HitRadius, WindStep.Damage * GetDamageMultiplier(spellLevel));
 

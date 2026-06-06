@@ -16,7 +16,7 @@ public class Tornado : Spell
     public override SpellElement Element => SpellElement.Air;
     public override SpellType    Type    => SpellType.Offense;
 
-    public override float FluxCost => 70f;
+    public override float FluxCost => 58f;
     public override float CastTime => 2.0f;
     public override string? AnimationCode => "air_wind_tornado";
     public override bool AnimationTakesOverBody => true;
@@ -37,9 +37,9 @@ public class Tornado : Spell
         var currentCenter = baseCenter.Clone();
         var targetCenter = baseCenter.Clone();
         float roamRadius = 5f;
-        float duration = 8f + (spellLevel - 1) * 0.4f;
+        float duration = 10f + (spellLevel - 1) * 0.4f;
         float elapsed = 0f;
-        float damage = 7f * GetDamageMultiplier(spellLevel);
+        float damage = 8f * GetDamageMultiplier(spellLevel);
 
         long listenerId = 0;
         listenerId = world.Api.Event.RegisterGameTickListener(dt =>

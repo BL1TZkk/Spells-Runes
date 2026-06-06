@@ -70,8 +70,12 @@
   "itemdesc-ignis-paste": "A volatile liquid paste made from ignis flux echoes. Drinking it awakens the fire element.",
   "incontainer-ignis-paste": "Ignis Paste",
 
+  "item-alignment-amplifier": "Alignment Amplifier",
+  "itemdesc-alignment-amplifier": "A ritual needle used to manually advance flux alignment. Injecting it raises the caster's alignment level.",
+
   "entity-wind-spear": "Wind Spear",
   "entity-fire-mine": "Fire Mine",
+  "entity-wind-clone": "Wind Clone",
 
   "item-scroll-ashveil-1": "Ashveil Brotherhood — Record I",
   "item-scroll-ashveil-2": "Ashveil Brotherhood — Record II",

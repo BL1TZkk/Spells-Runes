@@ -17,7 +17,7 @@ public class WindSlash : Spell
     public override SpellElement Element => SpellElement.Air;
     public override SpellType    Type    => SpellType.Offense;
 
-    public override float FluxCost => 25f;
+    public override float FluxCost => 22f;
     public override float CastTime => 0.8f;
 
     public override string? AnimationCode        => "air_wind_slash";

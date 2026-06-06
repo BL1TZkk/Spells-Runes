@@ -18,7 +18,7 @@ public class WindSpear : Spell
     public override SpellElement Element => SpellElement.Air;
     public override SpellType    Type    => SpellType.Offense;
 
-    public override float FluxCost => 50f;
+    public override float FluxCost => 42f;
     public override float CastTime => 1.0f;
 
     public override string? AnimationCode        => "air_wind_spear";
@@ -57,7 +57,7 @@ public class WindSpear : Spell
         if (spear is EntityProjectile proj)
         {
             proj.FiredBy        = caster;
-            proj.Damage         = 12f * (1f + 0.15f * (spellLevel - 1));
+            proj.Damage         = 20f * (1f + 0.15f * (spellLevel - 1));
             proj.DamageType     = EnumDamageType.PiercingAttack;
             proj.Weight         = 0.001f;
             proj.ProjectileStack = new ItemStack(world.GetItem(new AssetLocation("game:stick")) ?? world.GetItem(new AssetLocation("game:flint")));

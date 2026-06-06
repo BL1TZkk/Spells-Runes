@@ -19,7 +19,7 @@ public class WindVortex : Spell
     public override SpellElement Element => SpellElement.Air;
     public override SpellType    Type    => SpellType.Defense;
 
-    public override float FluxCost => 60f;
+    public override float FluxCost => 50f;
     public override float CastTime => 0f;
     public override string? AnimationCode => "air_wind_vortex";
     public override bool AnimationTakesOverBody => true;
@@ -36,7 +36,7 @@ public class WindVortex : Spell
 
         if (world.Side != EnumAppSide.Server || world.Api == null) return;
 
-        float duration = 3f + (spellLevel - 1) * 0.2f;
+        float duration = 3.5f + (spellLevel - 1) * 0.2f;
         float elapsed = 0f;
         long listenerId = 0;
         listenerId = world.Api.Event.RegisterGameTickListener(dt =>

@@ -15,7 +15,7 @@
 	"client": {
 		"renderer": "Shape",
 		"shape": { "base": "spellsandrunes:entity/wind-spear" },
-		"texture": { "base": "game:block/ice" },
+		"texture": { "base": "survival:block/glass/blue" },
 		"glowLevel": 0,
 		"behaviors": [
 			{

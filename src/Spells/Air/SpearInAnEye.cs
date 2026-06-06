@@ -16,7 +16,7 @@ public class SpearInAnEye : Spell
     public override SpellElement Element => SpellElement.Air;
     public override SpellType    Type    => SpellType.Offense;
 
-    public override float FluxCost => 80f;
+    public override float FluxCost => 75f;
     public override float CastTime => 2.0f;
 
 
@@ -48,7 +48,7 @@ public class SpearInAnEye : Spell
         float elapsed = 0f;
         float volleyElapsed = 0f;
         float volleyInterval = 0.7f;
-        float damage = 16f * GetDamageMultiplier(spellLevel);
+        float damage = 18f * GetDamageMultiplier(spellLevel);
 
         long listenerId = 0;
         listenerId = world.Api.Event.RegisterGameTickListener(dt =>

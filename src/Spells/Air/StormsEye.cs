@@ -18,7 +18,7 @@ public class StormsEye : Spell
     public override SpellElement Element => SpellElement.Air;
     public override SpellType    Type    => SpellType.Enchantment;
 
-    public override float FluxCost => 55f;
+    public override float FluxCost => 48f;
     public override float CastTime => 1.5f;
     public override string? AnimationCode => "air_stroms_eye";
     public override bool AnimationTakesOverBody => true;
@@ -30,7 +30,7 @@ public class StormsEye : Spell
     public const float Range = 7f;
     public const float Radius = 2.4f;
     public const float PullStrength = 0.3f;
-    public const float DurationSeconds = 5f;
+    public const float DurationSeconds = 6f;
 
     public static Vec3d GetCenter(EntityAgent caster)
     {

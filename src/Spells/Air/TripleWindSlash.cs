@@ -21,7 +21,7 @@ public class TripleWindSlash : Spell
     public override SpellElement Element => SpellElement.Air;
     public override SpellType    Type    => SpellType.Offense;
 
-    public override float FluxCost => 45f;
+    public override float FluxCost => 40f;
     public override float CastTime => FirstReleaseFrame / 30f;
     public override string? AnimationCode => "air_triple_wind_slash";
     public override bool AnimationTakesOverBody => true;

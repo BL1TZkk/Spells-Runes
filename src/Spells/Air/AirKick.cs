@@ -21,7 +21,7 @@ public class AirKick : Spell
     public override SpellElement Element => SpellElement.Air;
     public override SpellType    Type    => SpellType.Offense;
 
-    public override float FluxCost => 30f;
+    public override float FluxCost => 38f;
     public override float CastTime => 0.7f;
 
     public override string? AnimationCode        => "air_wind_kick";
@@ -36,7 +36,7 @@ public class AirKick : Spell
 
     public const float ProjectileSpeed       = 28f;
     public const float ProjectileRadius      = 0.5f;
-    public const float ImpactDamage          = 12f;
+    public const float ImpactDamage          = 16f;
     public const float MaxRange              = 20f;
     public const float LaunchKnockbackRadius = 3f;
     public const float LaunchKnockbackForce  = 0.6f;

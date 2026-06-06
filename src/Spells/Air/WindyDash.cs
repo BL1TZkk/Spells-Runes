@@ -30,9 +30,9 @@ public class WindyDash : Spell
 
     public override (int col, int row) TreePosition => (0, 3);
 
-    public const float ForwardForce = 0.25f;
+    public const float ForwardForce = 0.75f;
     public const float DurationSeconds = 3f;
-    public const float SpeedMultiplier = 1.12f;
+    public const float SpeedMultiplier = 1.18f;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {

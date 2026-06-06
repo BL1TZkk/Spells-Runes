@@ -1,4 +1,6 @@
+using System.Text;
 using Vintagestory.API.Client;
+using Vintagestory.API.Config;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using SpellsAndRunes.GUI;
@@ -19,6 +21,17 @@ public class ItemScroll : Item
             path = path.Replace("scroll-", "").Replace("{type}-", "");
             return path;
         }
+    }
+
+    // VS constructs lang keys using the code TEMPLATE (scroll-{type}) not resolved code,
+    // causing string.Format to throw on {type}. Override to use resolved keys directly.
+    public override string GetHeldItemName(ItemStack itemStack)
+        => Lang.Get("item-scroll-" + ScrollId);
+
+    public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
+    {
+        string desc = Lang.GetIfExists("itemdesc-scroll-" + ScrollId);
+        if (desc != null) dsc.AppendLine(desc);
     }
 
     public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel,

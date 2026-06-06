@@ -16,7 +16,7 @@ public class WindStep : Spell
     public override SpellElement Element => SpellElement.Air;
     public override SpellType    Type    => SpellType.Offense;
 
-    public override float FluxCost => 35f;
+    public override float FluxCost => 32f;
     public override float CastTime => 0.5f;
     public override string? AnimationCode => "air_wind_step";
     public override bool AnimationTakesOverBody => true;

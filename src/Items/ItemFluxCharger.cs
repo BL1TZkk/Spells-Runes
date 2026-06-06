@@ -47,8 +47,6 @@ public class ItemFluxCharger : Item
         if (byEntity.World.Side == EnumAppSide.Client)
         {
             float progress = secondsUsed / UseDuration;
-            SpawnOrbitRings(byEntity, secondsUsed, progress);
-            SpawnSphereShell(byEntity, secondsUsed, progress);
             byEntity.Pos.Motion.Y = 0.018f + progress * 0.035f;
         }
 
@@ -64,6 +62,8 @@ public class ItemFluxCharger : Item
 
         if (byEntity.World.Side == EnumAppSide.Client)
         {
+            SpawnOrbitRings(byEntity, 0f, 1f);
+            SpawnSphereShell(byEntity, 0f, 1f);
             SpawnSphereBurst(byEntity);
             SpawnGroundRing(byEntity);
             byEntity.World.PlaySoundAt(

@@ -2,8 +2,6 @@
 
 A fast-paced elemental magic mod for Vintage Story. Cast spells using a flux-based mana system, chain abilities into combos, and master multiple elements each with their own unlockable spell tree.
 
-**[View full roadmap](https://junnA420.github.io/Spells-Runes/roadmap.html)**
-
 ---
 
 ## Getting Started
@@ -36,8 +34,8 @@ Once done, Flux is permanently unlocked. Open the **Spellbook** with `K`, unlock
 
 | Element | Status |
 |---|---|
-| Air | In development |
-| Fire | Planned |
+| Air | Released (v0.1) |
+| Fire | Released (v0.1) |
 | Water | Planned |
 | Earth | Planned |
 

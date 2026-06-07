@@ -98,11 +98,13 @@ public class MsgSpellFx
     [ProtoMember(9)] public float  RollDeg { get; set; } = 0f;
 }
 
+#if DEBUG
 [ProtoContract]
 public class MsgChickenKills
 {
     [ProtoMember(1)] public int Count { get; set; }
 }
+#endif
 
 [ProtoContract]
 public class MsgCancelCast

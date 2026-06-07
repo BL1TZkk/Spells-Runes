@@ -42,7 +42,9 @@ public class SpellsAndRunesMod : ModSystem
     private HudFlux? hudFlux;
     private HudCastBar? castBar;
     private HudRadialMenu? radialMenu;
+#if DEBUG
     private HudChickenCounter? hudChicken;
+#endif
     private GuiDialogSpellbook? spellbookDialog;
     private SpellConeRenderer?  coneRenderer;
     private FireGlowRenderer?      fireGlow;
@@ -70,12 +72,14 @@ public class SpellsAndRunesMod : ModSystem
     private bool clientMovementLockVertical;
 
     private const string ChannelName = "spellsandrunes";
-    private const string ChickenKillFileName = "chicken-kills.json";
     private const string CastMovementLockStatId = "spellsandrunes:castmovementlock";
     private const string CastMovementSlowStatId = "spellsandrunes:castmovementslow";
+#if DEBUG
+    private const string ChickenKillFileName = "chicken-kills.json";
     private int chickenKills;
     private string? chickenKillPath;
     private bool chickenKillsLoaded;
+#endif
 
     public override void Start(ICoreAPI api)
     {
@@ -102,6 +106,7 @@ public class SpellsAndRunesMod : ModSystem
 #endif
         SpellbookLoreRegistry.Load(api);
         DebugCommands.Register(api);
+#if DEBUG
         InitChickenKillCounter(api);
         api.Event.OnEntityDespawn += (entity, despawnData) =>
         {
@@ -111,6 +116,7 @@ public class SpellsAndRunesMod : ModSystem
                 return;
             CountChickenDeath(api, entity);
         };
+#endif
 
         serverChannel = ServerChannel = api.Network.RegisterChannel(ChannelName)
             .RegisterMessageType<MsgUnlockSpell>()
@@ -125,7 +131,6 @@ public class SpellsAndRunesMod : ModSystem
             .RegisterMessageType<MsgMovementBoost>()
             .RegisterMessageType<MsgPlayAnimation>()
             .RegisterMessageType<MsgCancelCast>()
-            .RegisterMessageType<MsgChickenKills>()
             .RegisterMessageType<MsgReadScroll>()
             .SetMessageHandler<MsgReadScroll>((player, msg) =>
             {
@@ -529,8 +534,10 @@ public class SpellsAndRunesMod : ModSystem
 
         api.Event.PlayerJoin += player =>
         {
+#if DEBUG
             if (player is IServerPlayer sp)
                 SendChickenKills(sp);
+#endif
 
             // Restore or clear FluxCharger debuff after reconnect
             if (player.Entity is { } joinEntity)
@@ -578,7 +585,6 @@ public class SpellsAndRunesMod : ModSystem
             .RegisterMessageType<MsgMovementBoost>()
             .RegisterMessageType<MsgPlayAnimation>()
             .RegisterMessageType<MsgCancelCast>()
-            .RegisterMessageType<MsgChickenKills>()
             .RegisterMessageType<MsgReadScroll>()
             .SetMessageHandler<MsgPlayAnimation>(msg =>
             {
@@ -606,11 +612,13 @@ public class SpellsAndRunesMod : ModSystem
                     activeCastSpellId = null;
                 }
             })
+#if DEBUG
             .SetMessageHandler<MsgChickenKills>(msg =>
             {
                 chickenKills = msg.Count;
                 hudChicken?.SetCount(chickenKills);
             })
+#endif
             .SetMessageHandler<MsgFreezeMotion>(msg =>
             {
                 var entity = api.World.Player?.Entity;
@@ -866,7 +874,9 @@ public class SpellsAndRunesMod : ModSystem
         radialMenu      = new HudRadialMenu(api);
         hudFlux         = new HudFlux(api, radialMenu);
         castBar         = new HudCastBar(api);
+#if DEBUG
         hudChicken      = new HudChickenCounter(api);
+#endif
         spellbookDialog = new GuiDialogSpellbook(api, clientChannel!);
         coneRenderer = new SpellConeRenderer(api, radialMenu);
         fireGlow     = new FireGlowRenderer(api);
@@ -1080,7 +1090,9 @@ public class SpellsAndRunesMod : ModSystem
         hudFlux?.Dispose();
         castBar?.Dispose();
         radialMenu?.Dispose();
+#if DEBUG
         hudChicken?.Dispose();
+#endif
         spellbookDialog?.Dispose();
         fireGlow?.Dispose();
         SylphGlow?.Dispose();
@@ -1733,6 +1745,7 @@ public class SpellsAndRunesMod : ModSystem
         };
     }
 
+#if DEBUG
     private void InitChickenKillCounter(ICoreServerAPI api)
     {
         if (chickenKillsLoaded) return;
@@ -1798,4 +1811,5 @@ public class SpellsAndRunesMod : ModSystem
         public int ChickenKills { get; set; }
         public string? UpdatedUtc { get; set; }
     }
+#endif
 }

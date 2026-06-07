@@ -2,7 +2,7 @@
   {
     "op": "add",
     "path": "/selling/list/-",
-    "file": "survival:config/tradelists/trader-artisan.json",
+    "file": "game:config/tradelists/trader-artisan.json",
     "value": {
       "code": "alignment-amplifier",
       "type": "item",
@@ -15,7 +15,7 @@
   {
     "op": "add",
     "path": "/selling/list/-",
-    "file": "survival:config/tradelists/trader-treasurehunter.json",
+    "file": "game:config/tradelists/trader-treasurehunter.json",
     "value": {
       "code": "alignment-amplifier",
       "type": "item",
@@ -28,36 +28,36 @@
   {
     "op": "add",
     "path": "/attributesByType/*-mines/stacks/-",
-    "file": "survival:itemtypes/meta/stackrandomizer-mines.json",
+    "file": "game:itemtypes/meta/stackrandomizer-mines.json",
     "value": { "type": "item", "code": "spellsandrunes:alignment-amplifier", "chance": 0.4 }
   },
 
-  { "op": "add", "path": "/selling/list/-", "file": "survival:config/tradelists/trader-artisan.json",
+  { "op": "add", "path": "/selling/list/-", "file": "game:config/tradelists/trader-artisan.json",
     "value": { "code": "scroll-fieldmanual-1", "type": "item", "domain": "spellsandrunes", "stacksize": 1, "stock": { "avg": 1, "var": 0 }, "price": { "avg": 22, "var": 5 } } },
-  { "op": "add", "path": "/selling/list/-", "file": "survival:config/tradelists/trader-artisan.json",
+  { "op": "add", "path": "/selling/list/-", "file": "game:config/tradelists/trader-artisan.json",
     "value": { "code": "scroll-fieldmanual-2", "type": "item", "domain": "spellsandrunes", "stacksize": 1, "stock": { "avg": 1, "var": 0 }, "price": { "avg": 22, "var": 5 } } },
 
-  { "op": "add", "path": "/selling/list/-", "file": "survival:config/tradelists/trader-treasurehunter.json",
+  { "op": "add", "path": "/selling/list/-", "file": "game:config/tradelists/trader-treasurehunter.json",
     "value": { "code": "scroll-voss-1", "type": "item", "domain": "spellsandrunes", "stacksize": 1, "stock": { "avg": 1, "var": 0 }, "price": { "avg": 28, "var": 6 } } },
-  { "op": "add", "path": "/selling/list/-", "file": "survival:config/tradelists/trader-treasurehunter.json",
+  { "op": "add", "path": "/selling/list/-", "file": "game:config/tradelists/trader-treasurehunter.json",
     "value": { "code": "scroll-voss-2", "type": "item", "domain": "spellsandrunes", "stacksize": 1, "stock": { "avg": 1, "var": 0 }, "price": { "avg": 28, "var": 6 } } },
-  { "op": "add", "path": "/selling/list/-", "file": "survival:config/tradelists/trader-treasurehunter.json",
+  { "op": "add", "path": "/selling/list/-", "file": "game:config/tradelists/trader-treasurehunter.json",
     "value": { "code": "scroll-voss-3", "type": "item", "domain": "spellsandrunes", "stacksize": 1, "stock": { "avg": 1, "var": 0 }, "price": { "avg": 28, "var": 6 } } },
-  { "op": "add", "path": "/selling/list/-", "file": "survival:config/tradelists/trader-treasurehunter.json",
+  { "op": "add", "path": "/selling/list/-", "file": "game:config/tradelists/trader-treasurehunter.json",
     "value": { "code": "scroll-voss-4", "type": "item", "domain": "spellsandrunes", "stacksize": 1, "stock": { "avg": 1, "var": 0 }, "price": { "avg": 28, "var": 6 } } },
-  { "op": "add", "path": "/selling/list/-", "file": "survival:config/tradelists/trader-treasurehunter.json",
+  { "op": "add", "path": "/selling/list/-", "file": "game:config/tradelists/trader-treasurehunter.json",
     "value": { "code": "scroll-aldenmoor-1", "type": "item", "domain": "spellsandrunes", "stacksize": 1, "stock": { "avg": 1, "var": 0 }, "price": { "avg": 30, "var": 6 } } },
-  { "op": "add", "path": "/selling/list/-", "file": "survival:config/tradelists/trader-treasurehunter.json",
+  { "op": "add", "path": "/selling/list/-", "file": "game:config/tradelists/trader-treasurehunter.json",
     "value": { "code": "scroll-aldenmoor-2", "type": "item", "domain": "spellsandrunes", "stacksize": 1, "stock": { "avg": 1, "var": 0 }, "price": { "avg": 30, "var": 6 } } },
-  { "op": "add", "path": "/selling/list/-", "file": "survival:config/tradelists/trader-treasurehunter.json",
+  { "op": "add", "path": "/selling/list/-", "file": "game:config/tradelists/trader-treasurehunter.json",
     "value": { "code": "scroll-aldenmoor-3", "type": "item", "domain": "spellsandrunes", "stacksize": 1, "stock": { "avg": 1, "var": 0 }, "price": { "avg": 30, "var": 6 } } },
 
-  { "op": "add", "path": "/attributesByType/*-mines/stacks/-", "file": "survival:itemtypes/meta/stackrandomizer-mines.json",
+  { "op": "add", "path": "/attributesByType/*-mines/stacks/-", "file": "game:itemtypes/meta/stackrandomizer-mines.json",
     "value": { "type": "item", "code": "spellsandrunes:scroll-ashveil-1", "chance": 0.12 } },
-  { "op": "add", "path": "/attributesByType/*-mines/stacks/-", "file": "survival:itemtypes/meta/stackrandomizer-mines.json",
+  { "op": "add", "path": "/attributesByType/*-mines/stacks/-", "file": "game:itemtypes/meta/stackrandomizer-mines.json",
     "value": { "type": "item", "code": "spellsandrunes:scroll-ashveil-2", "chance": 0.12 } },
-  { "op": "add", "path": "/attributesByType/*-mines/stacks/-", "file": "survival:itemtypes/meta/stackrandomizer-mines.json",
+  { "op": "add", "path": "/attributesByType/*-mines/stacks/-", "file": "game:itemtypes/meta/stackrandomizer-mines.json",
     "value": { "type": "item", "code": "spellsandrunes:scroll-ashveil-3", "chance": 0.12 } },
-  { "op": "add", "path": "/attributesByType/*-mines/stacks/-", "file": "survival:itemtypes/meta/stackrandomizer-mines.json",
+  { "op": "add", "path": "/attributesByType/*-mines/stacks/-", "file": "game:itemtypes/meta/stackrandomizer-mines.json",
     "value": { "type": "item", "code": "spellsandrunes:scroll-ashveil-4", "chance": 0.12 } }
 ]

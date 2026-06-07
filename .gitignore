@@ -3,7 +3,6 @@ obj/
 *.user
 .vs/
 .vscode/
+.claude/
 *.zip
-docs/obsidian/.obsidian/workspace.json
-docs/obsidian/.obsidian/workspace-mobile.json
-docs/obsidian/.trash/
+docs/obsidian/

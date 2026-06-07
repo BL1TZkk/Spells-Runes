@@ -90,6 +90,7 @@ public class SpellsAndRunesMod : ModSystem
         api.RegisterItemClass("FluxCharger", typeof(Items.ItemFluxCharger));
         api.RegisterEntity("EntityWindSpear", typeof(Entities.EntityWindSpear));
         api.RegisterEntity("EntityFireMine", typeof(Entities.EntityFireMine));
+        api.RegisterEntity("EntityWindClone", typeof(Entities.EntityWindClone));
         api.RegisterCollectibleBehaviorClass("ExtractGemCore", typeof(CollBehaviorExtractGemCore));
         SpellRegistry.RegisterAll();
     }
@@ -756,6 +757,13 @@ public class SpellsAndRunesMod : ModSystem
                         if (DebugHitboxesEnabled)
                             Spells.Air.AirKick.SpawnHitboxDebug(api.World, origin, Spells.Air.AirKick.ProjectileRadius);
                         break;
+                    case "air_wind_step":
+                        Spells.Air.WindyDash.SpawnFx(api.World, origin, lookDir, msg.SpellLevel);
+                        break;
+                    case "air_cloning_wind_step":
+                        Spells.Air.WindyDash.SpawnFx(api.World, origin, lookDir, msg.SpellLevel);
+                        Spells.Air.WindClone.SpawnFx(api.World, origin, msg.SpellLevel);
+                        break;
                     case "fire_spark":
                         Spells.Fire.Spark.SpawnFx(api.World, origin, lookDir, msg.SpellLevel);
                         fireGlow?.AddFireGlow(origin, lookDir, Spells.Fire.Spark.Range, 18 * (1 + (msg.SpellLevel - 1) / 4));
@@ -1349,6 +1357,10 @@ public class SpellsAndRunesMod : ModSystem
         "fire_cook_in_hand" or
         "fire_jet_launch";
 
+    private static bool IsChannelSound(string spellId) => IsChannelSpell(spellId) || spellId is
+        "fire_wall" or
+        "fire_dance_cone";
+
     private void TickIgnisPasteDrink(ICoreServerAPI api, float deltaTime)
     {
         foreach (var p in api.World.AllOnlinePlayers)
@@ -1541,12 +1553,13 @@ public class SpellsAndRunesMod : ModSystem
 
         float levelBump = Math.Min(0.12f, Math.Max(0, spellLevel - 1) * 0.015f);
 
-        if (IsChannelSpell(spellId))
+        if (IsChannelSound(spellId))
         {
-            channelSoundLastMs[spellId] = api.World.ElapsedMilliseconds;
-            if (activeChannelSounds.TryGetValue(spellId, out var existing) && existing.IsPlaying)
+            channelSoundLastMs[spellId] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (activeChannelSounds.TryGetValue(spellId, out var existing) && existing != null)
             {
                 existing.SetPosition((float)origin.X, (float)origin.Y, (float)origin.Z);
+                if (!existing.IsPlaying) existing.Start();
             }
             else
             {
@@ -1608,22 +1621,22 @@ public class SpellsAndRunesMod : ModSystem
 
     private static (string? Path, float Range, float Volume, int ThrottleMs) GetSpellSound(string spellId) => spellId switch
     {
-        "air_air_push" => ("sounds/effect/swoosh", 16f, 0.55f, 180),
-        "air_windy_dash" => ("sounds/effect/gliding", 14f, 0.45f, 350),
-        "air_updraft" => ("sounds/block/bellowslarge/bellowlarge-out1", 14f, 0.55f, 350),
-        "air_wind_slash" => ("sounds/effect/swoosh", 18f, 0.68f, 90),
-        "air_wind_clone" => ("sounds/environment/wind", 14f, 0.38f, 650),
-        "air_storms_eye" => ("sounds/environment/wind", 20f, 0.52f, 500),
-        "air_stroms_eye" => ("sounds/environment/wind", 20f, 0.52f, 500),
-        "air_tornado" => ("sounds/environment/wind", 22f, 0.75f, 650),
-        "air_wind_vortex" => ("sounds/environment/wind", 18f, 0.48f, 650),
-        "air_feather_fall" => ("sounds/effect/gliding", 10f, 0.30f, 500),
-        "air_air_kick" => ("sounds/player/projectilehit", 16f, 0.58f, 120),
+        "air_air_push" => ("sounds/effect/swoosh", 16f, 0.70f, 180),
+        "air_windy_dash" => ("sounds/effect/gliding", 14f, 0.65f, 350),
+        "air_updraft" => ("sounds/block/bellowslarge/bellowlarge-out1", 14f, 0.72f, 350),
+        "air_wind_slash" => ("sounds/effect/swoosh", 18f, 0.75f, 90),
+        "air_wind_clone" => ("sounds/environment/wind", 14f, 0.58f, 650),
+        "air_storms_eye" => ("sounds/environment/wind", 20f, 0.68f, 500),
+        "air_stroms_eye" => ("sounds/environment/wind", 20f, 0.68f, 500),
+        "air_tornado" => ("sounds/environment/wind", 22f, 0.80f, 650),
+        "air_wind_vortex" => ("sounds/environment/wind", 18f, 0.65f, 650),
+        "air_feather_fall" => ("sounds/effect/gliding", 10f, 0.52f, 500),
+        "air_air_kick" => ("sounds/player/projectilehit", 16f, 0.72f, 120),
         "air_air_kick_trail" => (null, 0f, 0f, 0),
         "air_air_kick_hitbox" => (null, 0f, 0f, 0),
-        "air_spear_in_an_eye" => ("sounds/player/throw", 16f, 0.62f, 250),
-        "air_wind_step" => ("sounds/effect/gliding", 12f, 0.42f, 300),
-        "air_cloning_wind_step" => ("sounds/effect/gliding", 12f, 0.45f, 300),
+        "air_spear_in_an_eye" => ("sounds/player/throw", 16f, 0.72f, 250),
+        "air_wind_step" => ("sounds/effect/gliding", 16f, 0.68f, 300),
+        "air_cloning_wind_step" => ("sounds/effect/gliding", 16f, 0.70f, 300),
 
         "fire_spark" => ("sounds/torch-ignite", 14f, 0.65f, 160),
         "fire_flamethrower" => ("sounds/environment/fire", 16f, 0.70f, 260),

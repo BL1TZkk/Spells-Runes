@@ -1,0 +1,36 @@
+{
+	"code": "wind-clone",
+	"class": "EntityWindClone",
+	"tags": [],
+	"hitboxSize": { "x": 0.6, "y": 1.85 },
+	"deadHitboxSize": { "x": 0.75, "y": 0.5 },
+	"eyeHeight": 1.7,
+	"canClimb": false,
+	"drops": [],
+
+	"client": {
+		"renderer": "Shape",
+		"shape": { "base": "game:entity/humanoid/seraph-faceless" },
+		"texture": { "base": "spellsandrunes:entity/wind-clone" },
+		"glowLevel": 60,
+		"animations": [
+			{ "code": "idle",  "animation": "idle1",  "blendMode": "Average", "weight": 1.0 },
+			{ "code": "idle2", "animation": "idle2",  "blendMode": "Average", "weight": 1.0 },
+			{ "code": "hurt",  "animation": "hurt",   "blendMode": "Average", "weight": 1.0 }
+		],
+		"behaviors": [
+			{ "code": "passivephysics", "groundDragFactor": 1, "airDragFactor": 1, "gravityFactor": 1 },
+			{ "code": "interpolateposition" },
+			{ "code": "entityanimation" }
+		]
+	},
+
+	"server": {
+		"behaviors": [
+			{ "code": "passivephysics", "groundDragFactor": 1, "airDragFactor": 1, "gravityFactor": 1 },
+			{ "code": "health", "currenthealth": 20, "maxhealth": 20 },
+			{ "code": "despawn", "minSeconds": 25 },
+			{ "code": "entitystatetags" }
+		]
+	}
+}

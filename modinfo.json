@@ -2,7 +2,7 @@
   "modid": "spellsandrunes",
   "name": "Spells & Runes",
   "authors": ["JunnA", "Bl1tz"],
-  "description": "A fast-paced elemental magic mod for Vintage Story. Cast spells with a flux-based mana system and chain abilities into quick combos. Master multiple elements, each with their own spell tree - built for fluid, dynamic combat.",
+  "description": "Elemental magic for Vintage Story. Explore, unlock elements, and master & grow your magic.",
   "version": "0.1.0",
   "type": "code",
   "side": "universal",

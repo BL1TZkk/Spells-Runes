@@ -26,8 +26,8 @@ public class Updraft : Spell
 
     public override (int col, int row) TreePosition => (1, 2);
 
-    public const float UpForce = 0.9f;
-    public const float ForwardForce = 0.45f;
+    public const float UpForce = 0.55f;
+    public const float ForwardForce = 0.38f;
 
     public override void Execute(EntityAgent caster, IWorldAccessor world, int spellLevel)
     {

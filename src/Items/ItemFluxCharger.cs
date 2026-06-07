@@ -21,6 +21,12 @@ public class ItemFluxCharger : Item
         ref EnumHandHandling handling)
     {
         if (!firstEvent) return;
+
+        var data = PlayerSpellData.For(byEntity);
+        var flux = byEntity.GetBehavior<EntityBehaviorFlux>();
+        if (data == null || !data.IsFluxUnlocked) return;
+        if (flux == null || flux.GetFluxAlignmentLevel() >= EntityBehaviorFlux.MaxAlignmentLevel) return;
+
         handling = EnumHandHandling.PreventDefault;
 
         // Trigger animation — both direct and broadcast to match spell pattern
@@ -41,11 +47,6 @@ public class ItemFluxCharger : Item
                 byEntity.Pos.X, byEntity.Pos.Y, byEntity.Pos.Z,
                 capi0.World.Player, false, 16f, 0.9f);
         }
-
-        var data = PlayerSpellData.For(byEntity);
-        var flux = byEntity.GetBehavior<EntityBehaviorFlux>();
-        if (data == null || !data.IsFluxUnlocked) return;
-        if (flux == null || flux.GetFluxAlignmentLevel() >= EntityBehaviorFlux.MaxAlignmentLevel) return;
     }
 
     public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot,

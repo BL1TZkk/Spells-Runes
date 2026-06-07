@@ -43,5 +43,5 @@ Once done, Flux is permanently unlocked. Open the **Spellbook** with `K`, unlock
 
 ## Authors
 
-- JunnA
 - BL1TZ
+- JunnA

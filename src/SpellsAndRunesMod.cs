@@ -1419,8 +1419,6 @@ public class SpellsAndRunesMod : ModSystem
             var data = PlayerSpellData.For(sp.Entity);
             data.TriggerActivator("element_fire");
             data.UnlockLoreEntry("journal-fire-1");
-            data.Unlock("fire_hot_skin");
-            data.Unlock("fire_spark");
 
             sp.Entity.WatchedAttributes.SetBool("snr:firepower", true);
             sp.Entity.WatchedAttributes.MarkPathDirty("snr:firepower");

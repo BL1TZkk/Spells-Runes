@@ -64,10 +64,8 @@ public class ItemSylphweedBong : Item
         groundSlot.TakeOut(1);
         groundSlot.MarkDirty();
 
-        // Unlock flux and first row of Air spells
+        // Unlock flux
         data.UnlockFlux();
-        data.Unlock("air_feather_fall");
-        data.Unlock("air_air_push");
         data.UnlockLoreEntry("journal-air-1");
         player.SendMessage(0, Lang.Get("spellsandrunes:message-flux-awakens"), EnumChatType.Notification);
 

@@ -64,8 +64,9 @@ public class ItemSylphweedBong : Item
         groundSlot.TakeOut(1);
         groundSlot.MarkDirty();
 
-        // Unlock flux
+        // Unlock flux and grant SP for first two Air spells
         data.UnlockFlux();
+        data.GrantSkillPoints(SpellElement.Air, 2);
         data.UnlockLoreEntry("journal-air-1");
         player.SendMessage(0, Lang.Get("spellsandrunes:message-flux-awakens"), EnumChatType.Notification);
 

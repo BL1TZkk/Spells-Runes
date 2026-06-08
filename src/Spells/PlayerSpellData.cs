@@ -97,6 +97,14 @@ public class PlayerSpellData
         return levelsGained;
     }
 
+    public void GrantSkillPoints(SpellElement element, int amount)
+    {
+        var tree = GetTree(AttrElementSP);
+        string key = element.ToString();
+        tree.SetInt(key, tree.GetInt(key, 0) + amount);
+        entity.WatchedAttributes.MarkPathDirty(AttrElementSP);
+    }
+
     /// <summary>
     /// Spend SP for this element. Returns false if insufficient.
     /// </summary>

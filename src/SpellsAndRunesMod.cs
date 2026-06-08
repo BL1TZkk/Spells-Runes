@@ -1418,6 +1418,7 @@ public class SpellsAndRunesMod : ModSystem
 
             var data = PlayerSpellData.For(sp.Entity);
             data.TriggerActivator("element_fire");
+            data.GrantSkillPoints(SpellElement.Fire, 2);
             data.UnlockLoreEntry("journal-fire-1");
 
             sp.Entity.WatchedAttributes.SetBool("snr:firepower", true);
